@@ -140,6 +140,8 @@ type ClassSubjectAssignment struct {
 	ClassID   uint       `gorm:"index;not null" json:"class_id"`
 	SubjectID uint       `gorm:"index;not null" json:"subject_id"`
 	TeacherID uint       `gorm:"index;not null" json:"teacher_id"` // Connects to User (Role=Teacher)
+	Class     *Class     `json:"class,omitempty"`
+	Subject   *Subject   `json:"subject,omitempty"`
 	StartDate time.Time  `json:"start_date"`
 	EndDate   *time.Time `json:"end_date"`
 }

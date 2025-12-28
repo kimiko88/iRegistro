@@ -111,6 +111,10 @@ func (s *AcademicService) GetMarksByStudentID(studentID, classID, subjectID uint
 	return s.repo.GetMarksByStudentID(studentID, classID, subjectID)
 }
 
+func (s *AcademicService) GetMarksByClassID(classID uint) ([]domain.Mark, error) {
+	return s.repo.GetMarksByClassID(classID)
+}
+
 // --- Teacher/User ---
 
 func (s *AcademicService) GetTeacherByID(id uint) (*domain.User, error) {

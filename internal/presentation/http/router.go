@@ -131,6 +131,20 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 			adm.POST("/data-export", adminHandler.RequestExport)
 		}
 
+		// Teacher Module
+		teacherHandler := handlers.NewTeacherHandler(academicService)
+		tch := r.Group("/teacher")
+		tch.Use(middleware.AuthMiddleware("your-secret-key"))
+		{
+			tch.GET("/classes", teacherHandler.GetClasses)
+			// Note: In real app, ensure teacher accesses only their classes
+			tch.GET("/classes/:classId/students", teacherHandler.GetStudents)
+			tch.GET("/classes/:classId/subjects/:subjectId/marks", teacherHandler.GetMarks)
+			tch.POST("/marks", teacherHandler.CreateMark)
+			tch.GET("/classes/:classId/absences", teacherHandler.GetAbsences)
+			tch.POST("/classes/:classId/absences", teacherHandler.CreateAbsences)
+		}
+
 		// Route Group: /schools/:schoolId (Extensions)
 		// Assuming we are within `schools` group context or similar, but structure above closes brackets.
 		// Let's attach to `schools` group if possible, or create new.

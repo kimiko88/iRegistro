@@ -38,6 +38,23 @@ const logout = () => {
         <div>
           <li class="mb-4 text-2xl font-bold px-4">iRegistro</li>
           <li><router-link to="/dashboard">Dashboard</router-link></li>
+          
+          <!-- Admin Links (Should check role) -->
+          <li v-if="auth.user?.role === 'SuperAdmin'"><router-link to="/superadmin">Manage Schools</router-link></li>
+          <li v-if="auth.user?.role === 'Admin'">
+             <details open>
+                <summary>Administration</summary>
+                <ul>
+                    <li><router-link to="/admin/users">Users</router-link></li>
+                    <li><router-link to="/admin/settings">Settings</router-link></li>
+                </ul>
+             </details>
+          </li>
+          
+          <li v-if="auth.user?.role === 'Teacher'"><router-link to="/teacher">Class Dashboard</router-link></li>
+          <li v-if="auth.user?.role === 'Parent'"><router-link to="/parent">My Children</router-link></li>
+          <li v-if="auth.user?.role === 'Student'"><router-link to="/student">My Dashboard</router-link></li>
+
           <li v-if="auth.isAuthenticated"><a @click="logout">Logout</a></li>
         </div>
         <div class="text-xs text-center opacity-50">v0.1.0</div>
