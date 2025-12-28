@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/k/iRegistro/internal/application/academic"
+	"github.com/k/iRegistro/internal/application/admin"
 	"github.com/k/iRegistro/internal/application/communication"
 	"github.com/k/iRegistro/internal/application/reporting"
 	"github.com/k/iRegistro/internal/infrastructure/pdf"
@@ -10,10 +11,11 @@ import (
 	"github.com/k/iRegistro/internal/middleware"
 	"github.com/k/iRegistro/internal/presentation/http/handlers"
 	"github.com/k/iRegistro/internal/presentation/ws"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
-func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gorm.DB, hub *ws.Hub) *gin.Engine {
+func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gorm.DB, hub *ws.Hub, logger *zap.Logger) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(middleware.CORSMiddleware())
@@ -101,6 +103,32 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 			comm.POST("/slots", commHandler.CreateSlot) // Start simple, refine path usually /teachers/:id/slots
 			comm.GET("/slots/available", commHandler.GetAvailableSlots)
 			comm.POST("/bookings", commHandler.BookSlot)
+		}
+
+		// --- Admin Module Setup ---
+		adminRepo := persistence.NewAdminRepository(db)
+		auditService := admin.NewAuditService(adminRepo)
+		adminService := admin.NewAdminService(adminRepo, userRepo, academicRepo, auditService) // Reuse academicRepo defined above
+		importService := admin.NewUserImportService(adminRepo, userRepo, logger)
+		exportService := admin.NewDataExportService(adminRepo)
+		adminHandler := handlers.NewAdminHandler(adminService, auditService, importService, exportService)
+
+		// Admin Routes
+		// SuperAdmin
+		sa := r.Group("/superadmin")
+		sa.Use(middleware.AuthMiddleware("your-secret-key")) // Add Role check middleware
+		{
+			sa.POST("/schools", adminHandler.CreateSchool)
+		}
+
+		// School Admin
+		adm := r.Group("/admin")
+		adm.Use(middleware.AuthMiddleware("your-secret-key")) // Add Role check middleware
+		{
+			adm.GET("/settings", adminHandler.GetSettings)
+			adm.PUT("/settings", adminHandler.UpdateSetting)
+			adm.GET("/audit-logs", adminHandler.GetAuditLogs)
+			adm.POST("/data-export", adminHandler.RequestExport)
 		}
 
 		// Route Group: /schools/:schoolId (Extensions)

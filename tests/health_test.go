@@ -9,6 +9,7 @@ import (
 	httpPresentation "github.com/k/iRegistro/internal/presentation/http"
 	"github.com/k/iRegistro/internal/presentation/http/handlers"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestHealthCheck(t *testing.T) {
@@ -17,7 +18,7 @@ func TestHealthCheck(t *testing.T) {
 	// Use the actual router implementation
 	// For health check test, we don't need a real auth service
 	authHandler := handlers.NewAuthHandler(nil)
-	r := httpPresentation.NewRouter(authHandler, nil, nil, nil)
+	r := httpPresentation.NewRouter(authHandler, nil, nil, nil, zap.NewNop())
 
 	// Perform Request
 	w := httptest.NewRecorder()

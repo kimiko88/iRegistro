@@ -31,6 +31,9 @@ func main() {
 		&domain.Notification{}, &domain.NotificationPreference{},
 		&domain.Conversation{}, &domain.Message{},
 		&domain.ColloquiumSlot{}, &domain.ColloquiumBooking{},
+		// Admin
+		&domain.AuditLog{}, &domain.SchoolSettings{},
+		&domain.UserImport{}, &domain.DataExport{},
 	); err != nil {
 		logger.Fatal("Failed to migrate database", zap.Error(err))
 	}
