@@ -15,6 +15,11 @@ import AbsencesView from '@/views/absences/AbsencesView.vue';
 import MessagesView from '@/views/messages/MessagesView.vue';
 import ColloquiumView from '@/views/colloquiums/ColloquiumView.vue';
 
+import DirectorDashboard from '@/views/director/DirectorDashboard.vue';
+import DocumentSigning from '@/views/director/DocumentSigning.vue';
+import RequestApprovals from '@/views/director/RequestApprovals.vue';
+import SchoolReports from '@/views/director/SchoolReports.vue';
+
 // Placeholders for Teacher imports if file doesn't exist yet, but user asked to fix imports previously
 // Assuming ClassDashboard etc. exist or need to be stubbed if deleted.
 // Based on previous LS, these were missing.
@@ -100,6 +105,30 @@ const routes: Array<RouteRecordRaw> = [
                 name: 'SecretaryArchive',
                 component: Archive,
                 meta: { requiresRole: 'Secretary' }
+            },
+            {
+                path: 'director',
+                name: 'DirectorDashboard',
+                component: DirectorDashboard,
+                meta: { requiresRole: 'Director' }
+            },
+            {
+                path: 'director/signing',
+                name: 'DocumentSigning',
+                component: DocumentSigning,
+                meta: { requiresRole: 'Director' }
+            },
+            {
+                path: 'director/approvals',
+                name: 'RequestApprovals',
+                component: RequestApprovals,
+                meta: { requiresRole: 'Director' }
+            },
+            {
+                path: 'director/reports',
+                name: 'SchoolReports',
+                component: SchoolReports,
+                meta: { requiresRole: 'Director' }
             },
             // Add other routes here
         ]

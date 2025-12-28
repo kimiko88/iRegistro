@@ -55,6 +55,7 @@ const logout = () => {
           <li v-if="auth.user?.role === 'Parent'"><router-link to="/parent">My Children</router-link></li>
           <li v-if="auth.user?.role === 'Student'"><router-link to="/student">My Dashboard</router-link></li>
           <li v-if="auth.user?.role === 'Secretary'"><router-link to="/secretary">Documents</router-link></li>
+          <li v-if="auth.user?.role === 'Director'"><router-link to="/director">School Overview</router-link></li>
 
           <li v-if="auth.isAuthenticated"><a @click="logout">Logout</a></li>
         </div>

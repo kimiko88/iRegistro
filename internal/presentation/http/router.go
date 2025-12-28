@@ -5,8 +5,10 @@ import (
 	"github.com/k/iRegistro/internal/application/academic"
 	"github.com/k/iRegistro/internal/application/admin"
 	"github.com/k/iRegistro/internal/application/communication"
+	"github.com/k/iRegistro/internal/application/director"
 	"github.com/k/iRegistro/internal/application/reporting"
 	"github.com/k/iRegistro/internal/application/secretary"
+	"github.com/k/iRegistro/internal/domain"
 	"github.com/k/iRegistro/internal/infrastructure/pdf"
 	"github.com/k/iRegistro/internal/infrastructure/persistence"
 	"github.com/k/iRegistro/internal/infrastructure/storage"
@@ -179,6 +181,9 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 		secService := secretary.NewSecretaryService(reportingRepo, pdfGen, localStorage, notifService)
 		secHandler := handlers.NewSecretaryHandler(secService)
 
+		directorService := director.NewDirectorService(academicRepo, reportingRepo)
+		directorHandler := handlers.NewDirectorHandler(directorService)
+
 		sec := r.Group("/secretary")
 		sec.Use(middleware.AuthMiddleware("your-secret-key")) // Add Role check
 		{
@@ -201,6 +206,16 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 		// GraphQL
 		r.POST("/query", handlers.GraphQLHandler(academicService, reportingService))
 		r.GET("/playground", handlers.PlaygroundHandler())
+
+		// Director routes
+		directorRoutes := r.Group("/director")
+		directorRoutes.Use(middleware.AuthMiddleware("your-secret-key"), middleware.RBACMiddleware(domain.RolePrincipal))
+		{
+			directorRoutes.GET("/kpi", directorHandler.GetKPIs)
+			directorRoutes.GET("/documents/sign", directorHandler.GetDocumentsToSign)
+			directorRoutes.POST("/documents/:id/sign", directorHandler.SignDocument)
+		}
+
 	}
 
 	return r

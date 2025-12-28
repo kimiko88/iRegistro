@@ -94,6 +94,8 @@ type DocumentSignature struct {
 	ID                 uint      `gorm:"primaryKey" json:"id"`
 	DocumentID         uint      `gorm:"index;not null" json:"document_id"`
 	SignerID           uint      `gorm:"index;not null" json:"signer_id"` // UserID
+	SignerName         string    `json:"signer_name"`                     // Added for Director
+	SignedAt           time.Time `json:"signed_at"`                       // Added for Director
 	SignatureTimestamp time.Time `json:"signature_timestamp"`
 	IPAddress          string    `gorm:"size:50" json:"ip_address"`
 	IsValid            bool      `gorm:"default:true" json:"is_valid"`
