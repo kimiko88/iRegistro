@@ -25,7 +25,7 @@ onMounted(() => {
           <div class="stats shadow bg-base-100">
               <div class="stat">
                   <div class="stat-title">Average (GPA)</div>
-                  <div class="stat-value text-primary">{{ parentStore.currentChildOverview.gpa }}</div>
+                  <div class="stat-value text-primary">{{ parentStore.currentChildOverview.gpa?.toFixed(1) || 'N/A' }}</div>
                   <div class="stat-desc">Latest term</div>
               </div>
           </div>

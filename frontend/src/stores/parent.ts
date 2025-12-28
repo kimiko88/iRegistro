@@ -16,22 +16,18 @@ export const useParentStore = defineStore('parent', {
     actions: {
         async fetchChildren() {
             const ui = useUIStore();
-            // ui.setLoading(true);
+            ui.setLoading(true);
             try {
-                // const res = await parentApi.getChildren();
-                // this.children = res.data;
-
-                // Mock
-                this.children = [
-                    { id: 101, name: 'Alice Rossi', class: '1A', school: 'Liceo Scientifico' },
-                    { id: 205, name: 'Marco Rossi', class: '3C', school: 'Media' }
-                ];
+                const res = await parentApi.getChildren();
+                this.children = res.data;
 
                 if (!this.selectedChildId && this.children.length > 0) {
                     this.selectChild(this.children[0].id);
                 }
+            } catch (e) {
+                console.error("Failed to fetch children", e);
             } finally {
-                // ui.setLoading(false);
+                ui.setLoading(false);
             }
         },
         selectChild(id: number) {
@@ -39,16 +35,14 @@ export const useParentStore = defineStore('parent', {
             this.fetchChildOverview(id);
         },
         async fetchChildOverview(childId: number) {
-            // Mock
-            this.currentChildOverview = {
-                gpa: 7.8,
-                attendance: 92,
-                nextColloquium: '2024-01-15 10:00',
-                recentMarks: [
-                    { subject: 'Math', value: 8, date: '2023-12-20' },
-                    { subject: 'History', value: 7.5, date: '2023-12-18' }
-                ]
-            };
+            const ui = useUIStore();
+            // Optional: loading for sub-component?
+            try {
+                const res = await parentApi.getChildOverview(childId);
+                this.currentChildOverview = res.data;
+            } catch (e) {
+                console.error("Failed to fetch child overview", e);
+            }
         }
     },
 });

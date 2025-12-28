@@ -36,6 +36,17 @@ describe('Parent Store', () => {
         // But for robust testing we should uncomment calls in store OR test the mock logic logic if we keep it.
         // Given store has MOCK DATA logic currently enabled:
 
+        // Mock return value
+        (parentApi.getChildren as any).mockResolvedValue({
+            data: [
+                { id: 101, name: 'Child 1' },
+                { id: 102, name: 'Child 2' }
+            ]
+        });
+        (parentApi.getChildOverview as any).mockResolvedValue({
+            data: { gpa: 7.8 }
+        });
+
         await store.fetchChildren();
 
         // Expected behavior from the Mock Data inside store:
@@ -47,6 +58,16 @@ describe('Parent Store', () => {
         const store = useParentStore();
 
         // Mock internal data setup
+        (parentApi.getChildren as any).mockResolvedValue({
+            data: [
+                { id: 101, name: 'Child 1' },
+                { id: 205, name: 'Child 2' }
+            ]
+        });
+        (parentApi.getChildOverview as any).mockResolvedValue({
+            data: { gpa: 7.8 }
+        });
+
         await store.fetchChildren();
 
         store.selectChild(205);

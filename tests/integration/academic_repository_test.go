@@ -11,7 +11,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"gorm.io/driver/postgres"
+	gormPG "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -37,7 +37,7 @@ func SetupTestDB(t *testing.T) (*gorm.DB, func()) {
 		t.Fatal(err)
 	}
 
-	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
+	db, err := gorm.Open(gormPG.Open(connStr), &gorm.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,15 +74,14 @@ func TestAcademicRepository_CreateAndGet(t *testing.T) {
 	repo := persistence.NewAcademicRepository(db)
 
 	// Seed School
-	school := domain.School{Name: "Test School", Code: "TEST01"}
+	school := domain.School{Name: "Test School", Code: "TEST01", City: "Test City", Region: "Test Region"}
 	db.Create(&school)
 
 	t.Run("Create and Get Class", func(t *testing.T) {
 		class := domain.Class{
-			SchoolID:     school.ID,
-			Year:         1,
-			Section:      "A",
-			AcademicYear: "2024/2025",
+			Grade:   1,
+			Section: "A",
+			Year:    "2024/2025",
 		}
 		err := repo.CreateClass(&class)
 		assert.NoError(t, err)

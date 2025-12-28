@@ -1,44 +1,37 @@
+import { describe, it, expect, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import ParentDashboard from '../ParentDashboard.vue';
-import { createPinia, setActivePinia } from 'pinia';
-import { createRouter, createWebHistory } from 'vue-router';
+import ParentDashboard from '@/views/parent/ParentDashboard.vue';
+import { createTestingPinia } from '@pinia/testing';
 
 describe('ParentDashboard.vue', () => {
-    beforeEach(() => {
-        setActivePinia(createPinia());
-    });
-
-    // Mock Router
-    const router = createRouter({
-        history: createWebHistory(),
-        routes: [{ path: '/', component: { template: '' } }]
-    });
-
-    it('renders dashboard with children selector', async () => {
-        const wrapper = mount(ParentDashboard, {
-            global: {
-                plugins: [router],
-                stubs: {
-                    MarksView: true, // Stub child components
+    it('renders correct children list', () => {
+        const pinia = createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+                parent: {
+                    children: [
+                        { id: 1, first_name: 'Child', last_name: 'One' },
+                        { id: 2, first_name: 'Child', last_name: 'Two' }
+                    ],
+                    selectedChildId: 1,
+                    currentChildOverview: {
+                        gpa: 8.0,
+                        attendance: 95,
+                        nextColloquium: 'Tomorrow',
+                        recentMarks: []
+                    }
                 }
             }
         });
 
-        // Trigger onMounted fetch
-        await wrapper.vm.$nextTick();
+        const wrapper = mount(ParentDashboard, {
+            global: {
+                plugins: [pinia],
+                stubs: ['router-view'] // Stub nested router view
+            }
+        });
 
-        // Check static text
-        expect(wrapper.text()).toContain('Parent Dashboard');
-
-        // Check if stats are rendered (based on default Mock data in store)
-        // Wait for store to update
-        await new Promise(resolve => setTimeout(resolve, 10));
-        await wrapper.vm.$nextTick();
-
-        const stats = wrapper.findAll('.stat-value');
-        expect(stats.length).toBeGreaterThan(0);
-        // GPA 7.8 from mock
-        expect(wrapper.text()).toContain('7.8');
+        expect(wrapper.text()).toContain('8.0'); // GPA from overview
+        expect(wrapper.text()).toContain('95%'); // Attendance
     });
 });

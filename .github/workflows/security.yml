@@ -1,0 +1,60 @@
+name: Security Scans
+
+on:
+  push:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 0 * * *' # Daily at midnight
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+      
+      - name: Run Gosec
+        uses: securego/gosec@master
+        with:
+          args: '-no-fail -fmt sarif -out gosec.sarif ./...'
+      
+      - name: Upload Gosec results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: gosec.sarif
+      
+      - name: Dependency check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'registro-elettronico'
+          path: '.'
+          format: 'SARIF'
+      
+      - name: Upload DependencyCheck results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'dependency-check-report.sarif'
+      
+      - name: OWASP ZAP scan (when deploying to staging)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: zaproxy/action-baseline@v0.4.0
+        with:
+          target: 'https://staging.registro.it'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+  secrets-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: TruffleHog scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified

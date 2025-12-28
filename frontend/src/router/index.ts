@@ -20,11 +20,10 @@ import DocumentSigning from '@/views/director/DocumentSigning.vue';
 import RequestApprovals from '@/views/director/RequestApprovals.vue';
 import SchoolReports from '@/views/director/SchoolReports.vue';
 
-// Placeholders for Teacher imports if file doesn't exist yet, but user asked to fix imports previously
-// Assuming ClassDashboard etc. exist or need to be stubbed if deleted.
-// Based on previous LS, these were missing.
+import TeacherDashboard from '@/views/teacher/ClassDashboard.vue';
+
 const SchoolSettings = { template: '<div>Settings</div>' }; // Stub if missing
-const ClassDashboard = { template: '<div>Class Dashboard</div>' }; // Stub if missing
+// ClassDashboard stub removed
 
 // For simplicity, defining explicit routes for parent sub-views inside parent children
 
@@ -67,8 +66,8 @@ const routes: Array<RouteRecordRaw> = [
             {
                 path: 'teacher',
                 name: 'TeacherDashboard',
-                component: ClassDashboard,
-                meta: { requiresRole: 'Teacher' } // In real map this to 'Insegnante'
+                component: TeacherDashboard,
+                meta: { requiresRole: 'Insegnante' } // Updated role to match backend seed (Insegnante)
             },
             {
                 path: 'parent',

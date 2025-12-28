@@ -12,28 +12,24 @@ export const useStudentStore = defineStore('student', {
     actions: {
         async fetchOverview() {
             const ui = useUIStore();
-            // ui.setLoading(true);
+            ui.setLoading(true);
             try {
-                // const res = await studentApi.getOverview();
-                // this.overview = res.data;
-
-                // Mock
-                this.overview = {
-                    gpa: 8.1,
-                    attendance: 98,
-                    nextColloquium: null,
-                    recentMarks: [
-                        { subject: 'Italian', value: 9, date: '2023-12-21' },
-                        { subject: 'English', value: 8, date: '2023-12-19' }
-                    ]
-                };
+                const res = await studentApi.getOverview();
+                this.overview = res.data;
+            } catch (e) {
+                console.error("Failed to fetch overview", e);
             } finally {
-                // ui.setLoading(false);
+                ui.setLoading(false);
             }
         },
         async fetchMarks() {
-            // Mock
-            this.marks = []; // Populate with more data if needed
+            const ui = useUIStore();
+            try {
+                const res = await studentApi.getMarks();
+                this.marks = res.data;
+            } catch (e) {
+                console.error("Failed to fetch marks");
+            }
         }
     },
 });

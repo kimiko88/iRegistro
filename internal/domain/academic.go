@@ -85,6 +85,7 @@ func (s *ScheduleData) Scan(value interface{}) error {
 type School struct {
 	ID             uint   `gorm:"primaryKey" json:"id"`
 	Name           string `gorm:"size:255;not null" json:"name"`
+	Code           string `gorm:"size:50;unique;not null" json:"code"` // Mechanicographic Code
 	City           string `gorm:"size:100" json:"city"`
 	Region         string `gorm:"size:100" json:"region"`
 	VatID          string `gorm:"size:50" json:"vat_id"`

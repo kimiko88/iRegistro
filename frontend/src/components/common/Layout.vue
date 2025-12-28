@@ -51,7 +51,7 @@ const logout = () => {
              </details>
           </li>
           
-          <li v-if="auth.user?.role === 'Teacher'"><router-link to="/teacher">Class Dashboard</router-link></li>
+          <li v-if="auth.user?.role === 'Insegnante'"><router-link to="/teacher">Registro Docente</router-link></li>
           <li v-if="auth.user?.role === 'Parent'"><router-link to="/parent">My Children</router-link></li>
           <li v-if="auth.user?.role === 'Student'"><router-link to="/student">My Dashboard</router-link></li>
           <li v-if="auth.user?.role === 'Secretary'"><router-link to="/secretary">Documents</router-link></li>
