@@ -55,7 +55,7 @@ func main() {
 	wsHandler := ws.NewHandler(hub, "your-secret-key")
 
 	// 5. Setup Router
-	r := httpPresentation.NewRouter(authHandler, wsHandler)
+	r := httpPresentation.NewRouter(authHandler, wsHandler, db)
 
 	// 6. Start Server
 	if err := r.Run(":" + cfg.Server.Port); err != nil {

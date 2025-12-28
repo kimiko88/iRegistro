@@ -1,0 +1,104 @@
+scalar Time
+
+type School {
+  id: ID!
+  name: String!
+  city: String
+  region: String
+  campuses: [Campus!]!
+}
+
+type Campus {
+  id: ID!
+  name: String!
+  address: String
+  curriculums: [Curriculum!]!
+}
+
+type Curriculum {
+  id: ID!
+  name: String!
+  code: String
+  classes: [Class!]!
+}
+
+type Class {
+  id: ID!
+  grade: Int!
+  section: String!
+  year: String!
+  students: [Student!]!
+  subjects: [Subject!]!
+  coordinator: Teacher
+  statistics: ClassStatistics
+}
+
+type Student {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  classes(year: Int): [Class!]!
+  marks(subjectId: ID): [Mark!]!
+  absences(year: Int): [Absence!]!
+}
+
+type Teacher {
+  id: ID!
+  name: String!
+  subjects: [Subject!]!
+  classAssignments(year: Int): [ClassAssignment!]!
+  totalHours: Int
+}
+
+type Subject {
+  id: ID!
+  name: String!
+  code: String
+  hoursPerWeek: Int
+}
+
+type Mark {
+  id: ID!
+  value: Float!
+  type: String!
+  date: Time!
+  subject: Subject!
+}
+
+type Absence {
+  id: ID!
+  date: Time!
+  type: String!
+  isJustified: Boolean!
+}
+
+type ClassStatistics {
+  totalStudents: Int!
+  averageGPA: Float
+  subjectAverages: [SubjectAverage!]!
+  absenceStatistics: AbsenceStatistics!
+}
+
+type SubjectAverage {
+  subject: Subject!
+  average: Float!
+}
+
+type AbsenceStatistics {
+  totalAbsences: Int!
+  averageAbsencesPerStudent: Float!
+  studentsWithHighAbsences(threshold: Float): [Student!]!
+}
+
+type ClassAssignment {
+  class: Class!
+  hoursPerWeek: Int!
+}
+
+type Query {
+  schools: [School!]!
+  school(id: ID!): School
+  class(id: ID!): Class
+  student(id: ID!): Student
+  teacher(id: ID!): Teacher
+}

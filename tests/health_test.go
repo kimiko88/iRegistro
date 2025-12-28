@@ -14,12 +14,10 @@ import (
 func TestHealthCheck(t *testing.T) {
 	// Setup
 	gin.SetMode(gin.TestMode)
-	r := gin.New()
-
 	// Use the actual router implementation
 	// For health check test, we don't need a real auth service
 	authHandler := handlers.NewAuthHandler(nil)
-	r = httpPresentation.NewRouter(authHandler, nil)
+	r := httpPresentation.NewRouter(authHandler, nil, nil)
 
 	// Perform Request
 	w := httptest.NewRecorder()
