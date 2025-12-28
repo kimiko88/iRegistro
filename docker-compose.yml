@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 15
+  postgres:
+    image: postgres:15-alpine
+    container_name: iregistro_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-iregistro}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d/migrations # Map migrations (optional auto-run if script added)
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - iregistro_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO (S3 Compatible Storage)
+  minio:
+    image: minio/minio:latest
+    container_name: iregistro_storage
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    command: server /data --console-address ":9001"
+    networks:
+      - iregistro_net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # pgAdmin 4 (Database Administration)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: iregistro_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@iregistro.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      - postgres
+    networks:
+      - iregistro_net
+
+  # Automated Backup Service
+  postgres_backup:
+    image: postgres:15-alpine
+    container_name: iregistro_backup
+    restart: always
+    environment:
+      PGHOST: postgres
+      PGUSER: ${DB_USER:-postgres}
+      PGPASSWORD: ${DB_PASSWORD}
+      PGDATABASE: ${DB_NAME:-iregistro}
+      BACKUP_DIR: /backups
+    volumes:
+      - ./backups:/backups
+    entrypoint: |
+      /bin/sh -c "
+      echo 'Starting Backup Service...';
+      while true; do
+        DATE=\$(date +%Y%m%d_%H%M%S);
+        echo \"Wait 24h (86400s) before next backup...\";
+        sleep 86400;
+        echo \"Creating backup for \$DATE...\";
+        pg_dump -h postgres -U \${PGUSER} -d \${PGDATABASE} | gzip > /backups/backup_\$DATE.sql.gz;
+        echo \"Backup created: backup_\$DATE.sql.gz\";
+        # Retention: Keep last 30 days (simplified cleanup)
+        find /backups -name 'backup_*.sql.gz' -mtime +30 -exec rm {} \;
+      done
+      "
+    depends_on:
+      - postgres
+    networks:
+      - iregistro_net
+
+volumes:
+  postgres_data:
+  minio_data:
+
+
+networks:
+  iregistro_net:
+    driver: bridge

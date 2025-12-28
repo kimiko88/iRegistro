@@ -1,31 +1,33 @@
+.PHONY: test test-unit test-integration test-e2e test-security test-benchmark coverage
 
-# Makefile for iRegistro
+# Run all unit tests (default)
+test: test-unit
 
-.PHONY: all build test lint run docker-build docker-run clean
+# Run unit tests
+test-unit:
+	go test -v -short ./internal/...
 
-PROJECT_NAME := iRegistro
-BINARY_NAME := iRegistro
-DOCKER_IMAGE := iRegistro
+# Run integration tests (requires Docker)
+test-integration:
+	go test -v ./tests/integration/...
 
-all: build
+# Run E2E tests (requires running server)
+test-e2e:
+	go test -v ./tests/e2e/...
 
-build:
-	go build -o bin/$(BINARY_NAME) cmd/api/main.go
+# Run security tests
+test-security:
+	go test -v ./tests/security/...
 
-test:
-	go test -v ./... -cover
+# Run benchmarks
+test-benchmark:
+	go test -bench=. ./tests/benchmarks/...
 
-lint:
-	golangci-lint run
+# Run coverage report
+coverage:
+	go test -coverprofile=coverage.out ./internal/...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
 
-run:
-	go run cmd/api/main.go
-
-docker-build:
-	docker build -t $(DOCKER_IMAGE) .
-
-docker-run:
-	docker run -p 8080:8080 $(DOCKER_IMAGE)
-
-clean:
-	rm -rf bin/
+# Run all tests (slow)
+test-all: test-unit test-integration test-e2e test-security
