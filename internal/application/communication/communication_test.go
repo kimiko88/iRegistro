@@ -7,6 +7,7 @@ import (
 	"github.com/k/iRegistro/internal/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"go.uber.org/zap"
 )
 
 // --- Mocks ---
@@ -108,6 +109,10 @@ func (m *MockCommRepo) GetBookingsByParentID(parentID uint) ([]domain.Colloquium
 	args := m.Called(parentID)
 	return args.Get(0).([]domain.ColloquiumBooking), args.Error(1)
 }
+func (m *MockCommRepo) GetBookingsByDateRange(from, to time.Time) ([]domain.ColloquiumBooking, error) {
+	args := m.Called(from, to)
+	return args.Get(0).([]domain.ColloquiumBooking), args.Error(1)
+}
 func (m *MockCommRepo) UpdateBooking(booking *domain.ColloquiumBooking) error {
 	return m.Called(booking).Error(0)
 }
@@ -116,6 +121,39 @@ func (m *MockCommRepo) DeleteBooking(id uint) error {
 }
 
 // --- Tests ---
+
+func TestScheduler(t *testing.T) {
+	mockRepo := new(MockCommRepo)
+	// mock notif service calls via repo mock?
+	// Scheduler calls s.notifService.TriggerNotification -> s.repo.GetPreferences + s.repo.CreateNotification
+	// This is integration-ish.
+	// We'll mock the repo calls that NotificationService makes.
+
+	// Creating real service with mock repo
+	notifSvc := NewNotificationService(mockRepo)
+	// But we need a Logger
+	logger := zap.NewNop()
+
+	sched := NewScheduler(mockRepo, notifSvc, logger)
+
+	// Expectations
+	// 1. GetBookingsByDateRange return 1 booking
+	mockRepo.On("GetBookingsByDateRange", mock.Anything, mock.Anything).Return([]domain.ColloquiumBooking{{ParentID: 10}}, nil)
+
+	// 2. TriggerNotification flow
+	// 2a. GetPreferences (called by TriggerNotification)
+	mockRepo.On("GetPreferences", uint(10)).Return([]domain.NotificationPreference{}, nil)
+	// 2b. CreateNotification
+	mockRepo.On("CreateNotification", mock.MatchedBy(func(n *domain.Notification) bool {
+		return n.UserID == 10 && n.Type == domain.NotifTypeSystem && n.Title == "Reminder"
+	})).Return(nil)
+
+	// Act
+	sched.SendReminders()
+
+	// Assert
+	mockRepo.AssertExpectations(t)
+}
 
 func TestTriggerNotification(t *testing.T) {
 	mockRepo := new(MockCommRepo)

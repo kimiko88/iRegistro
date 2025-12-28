@@ -34,16 +34,18 @@ func (s *Scheduler) SendReminders() {
 	endOfDay := startOfDay.Add(24 * time.Hour)
 
 	// We need a repository method to get bookings by date range or iterating slots.
-	// For efficiency, we should have GetBookingsByDateRange(from, to).
-	// Since we don't, and I can't extend repo endlessly without changing interface everywhere...
-	// I will skip complex implementation or add the method.
-	// adding GetBookingsByDateRange is best.
+	bookings, err := s.repo.GetBookingsByDateRange(startOfDay, endOfDay)
+	if err != nil {
+		s.logger.Error("Failed to fetch bookings for reminders", zap.Error(err))
+		return
+	}
 
-	s.logger.Info("Checking for reminders...", zap.Time("for_date", startOfDay))
+	for _, b := range bookings {
+		// Stub trigger
+		err := s.notifService.TriggerNotification(b.ParentID, domain.NotifTypeSystem, "Reminder", "You have a colloquium tomorrow", nil)
+		if err != nil {
+			s.logger.Error("Failed to send reminder", zap.Uint("user_id", b.ParentID), zap.Error(err))
+		}
+	}
 
-	// Assuming implementation...
-	// bookings, _ := s.repo.GetBookingsByDateRange(startOfDay, endOfDay)
-	// for _, b := range bookings {
-	//    s.notifService.TriggerNotification(b.ParentID, domain.NotifTypeSystem, "Reminder", "Colloquium tomorrow", nil)
-	// }
 }

@@ -160,6 +160,16 @@ func (r *CommunicationRepository) GetBookingsByParentID(parentID uint) ([]domain
 	return bookings, err
 }
 
+func (r *CommunicationRepository) GetBookingsByDateRange(from, to time.Time) ([]domain.ColloquiumBooking, error) {
+	// Join with Slot to check Date? Or just check if booking has date?
+	// Bookings don't have date, Slots have date.
+	var bookings []domain.ColloquiumBooking
+	err := r.db.Joins("Slot").
+		Where("Slot.date >= ? AND Slot.date <= ?", from, to).
+		Find(&bookings).Error
+	return bookings, err
+}
+
 func (r *CommunicationRepository) UpdateBooking(booking *domain.ColloquiumBooking) error {
 	return r.db.Save(booking).Error
 }

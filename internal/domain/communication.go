@@ -152,6 +152,7 @@ type CommunicationRepository interface {
 	CreateBooking(booking *ColloquiumBooking) error
 	GetBookingsBySlotID(slotID uint) ([]ColloquiumBooking, error)
 	GetBookingsByParentID(parentID uint) ([]ColloquiumBooking, error)
+	GetBookingsByDateRange(from, to time.Time) ([]ColloquiumBooking, error)
 	UpdateBooking(booking *ColloquiumBooking) error
 	DeleteBooking(id uint) error
 }
