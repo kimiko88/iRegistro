@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/k/iRegistro/internal/config"
+	"github.com/k/iRegistro/internal/domain"
 	"github.com/k/iRegistro/internal/infrastructure/persistence"
 	"go.uber.org/zap"
 )
@@ -24,11 +25,9 @@ func main() {
 	}
 
 	logger.Info("Running migrations...")
-	// AutoMigrate will be added here as domains are implemented
-	// if err := db.AutoMigrate(&domain.User{}, ...); err != nil { ... }
-
-	// Create a dummy table check or similar if needed for now,
-	// but mostly this is a placeholder for future migrations.
+	if err := db.AutoMigrate(&domain.User{}, &domain.Session{}, &domain.RefreshToken{}); err != nil {
+		logger.Fatal("Failed to migrate database", zap.Error(err))
+	}
 	sqlDB, err := db.DB()
 	if err != nil {
 		logger.Fatal("Failed to get generic db interface", zap.Error(err))

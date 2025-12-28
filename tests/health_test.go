@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	httpPresentation "github.com/k/iRegistro/internal/presentation/http"
+	"github.com/k/iRegistro/internal/presentation/http/handlers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +17,9 @@ func TestHealthCheck(t *testing.T) {
 	r := gin.New()
 
 	// Use the actual router implementation
-	r = httpPresentation.NewRouter()
+	// For health check test, we don't need a real auth service
+	authHandler := handlers.NewAuthHandler(nil)
+	r = httpPresentation.NewRouter(authHandler, nil)
 
 	// Perform Request
 	w := httptest.NewRecorder()
