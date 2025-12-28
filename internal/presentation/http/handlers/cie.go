@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -91,11 +92,12 @@ func (h *CIEHandler) Callback(c *gin.Context) {
 	}
 
 	// Parse school_id as uint
-	schoolID, err := strconv.ParseU int(schoolIDStr, 10, 32)
+	id, err := strconv.ParseUint(schoolIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid school_id"})
 		return
 	}
+	schoolID := uint(id)
 
 	// Get authorization code
 	code := c.Query("code")
