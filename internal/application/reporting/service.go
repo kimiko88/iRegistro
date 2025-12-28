@@ -7,13 +7,18 @@ import (
 	"github.com/k/iRegistro/internal/domain"
 )
 
-type ReportingService struct {
-	repo   domain.ReportingRepository
-	pdfGen domain.PDFGenerator
+type Notifier interface {
+	TriggerNotification(userID uint, notifType domain.NotificationType, title, body string, data domain.JSONMap) error
 }
 
-func NewReportingService(repo domain.ReportingRepository, pdfGen domain.PDFGenerator) *ReportingService {
-	return &ReportingService{repo: repo, pdfGen: pdfGen}
+type ReportingService struct {
+	repo     domain.ReportingRepository
+	pdfGen   domain.PDFGenerator
+	notifier Notifier
+}
+
+func NewReportingService(repo domain.ReportingRepository, pdfGen domain.PDFGenerator, notifier Notifier) *ReportingService {
+	return &ReportingService{repo: repo, pdfGen: pdfGen, notifier: notifier}
 }
 
 // --- Documents ---
@@ -34,6 +39,13 @@ func (s *ReportingService) CreateReportCard(schoolID, studentID, classID uint, a
 	if err := s.repo.CreateDocument(doc); err != nil {
 		return nil, err
 	}
+
+	// Notify Secretary (Placeholder ID or Role based logic)
+	// Assuming ID 1 is Secretary or iterating all secretaries.
+	// For now simple single user trigger
+	secretaryID := uint(1)
+	s.notifier.TriggerNotification(secretaryID, "DOCUMENT_CREATED", "New Document Pending", "A new document requires approval.", domain.JSONMap{"doc_id": doc.ID})
+
 	return doc, nil
 }
 

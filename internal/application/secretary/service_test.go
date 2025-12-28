@@ -1,4 +1,4 @@
-package reporting
+package secretary
 
 import (
 	"testing"
@@ -14,10 +14,15 @@ type MockRepo struct {
 	mock.Mock
 }
 
-func (m *MockRepo) CreateDocument(doc *domain.Document) error {
-	args := m.Called(doc)
-	return args.Error(0)
+// Implement necessary interface methods for SecretaryService
+func (m *MockRepo) GetDocumentsByStatus(schoolID uint, status domain.DocumentStatus) ([]domain.Document, error) {
+	args := m.Called(schoolID, status)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Document), args.Error(1)
 }
+
 func (m *MockRepo) GetDocumentByID(id uint) (*domain.Document, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
@@ -25,26 +30,30 @@ func (m *MockRepo) GetDocumentByID(id uint) (*domain.Document, error) {
 	}
 	return args.Get(0).(*domain.Document), args.Error(1)
 }
-func (m *MockRepo) UpdateDocument(doc *domain.Document) error {
-	args := m.Called(doc)
-	return args.Error(0)
-}
+
 func (m *MockRepo) AddSignature(sig *domain.DocumentSignature) error {
 	args := m.Called(sig)
 	return args.Error(0)
 }
 
-// Stubs for others
+func (m *MockRepo) UpdateDocument(doc *domain.Document) error {
+	args := m.Called(doc)
+	return args.Error(0)
+}
+
+func (m *MockRepo) DeleteDocument(id uint) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+// Stubs for interface compliance
+func (m *MockRepo) CreateDocument(doc *domain.Document) error { return nil }
 func (m *MockRepo) GetDocumentsBySchoolID(schoolID uint, docType domain.DocumentType) ([]domain.Document, error) {
 	return nil, nil
 }
 func (m *MockRepo) GetDocumentsByStudentID(studentID uint) ([]domain.Document, error) {
 	return nil, nil
 }
-func (m *MockRepo) GetDocumentsByStatus(schoolID uint, status domain.DocumentStatus) ([]domain.Document, error) {
-	return nil, nil
-}
-func (m *MockRepo) DeleteDocument(id uint) error { return nil }
 func (m *MockRepo) GetSignaturesByDocumentID(docID uint) ([]domain.DocumentSignature, error) {
 	return nil, nil
 }
@@ -76,11 +85,19 @@ type MockPDFGen struct {
 }
 
 func (m *MockPDFGen) GenerateReportCard(data domain.JSONMap) ([]byte, error) {
-	args := m.Called(data)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]byte), args.Error(1)
+	return []byte("mock pdf"), nil
+}
+func (m *MockPDFGen) GenerateCertificate(data domain.JSONMap) ([]byte, error) {
+	return []byte("mock cert"), nil
+}
+
+type MockStorage struct {
+	mock.Mock
+}
+
+func (m *MockStorage) Save(filename string, data []byte) (string, error) {
+	args := m.Called(filename, data)
+	return args.String(0), args.Error(1)
 }
 
 type MockNotifier struct {
@@ -94,71 +111,37 @@ func (m *MockNotifier) TriggerNotification(userID uint, notifType domain.Notific
 
 // --- Tests ---
 
-func TestGetDocumentPDF(t *testing.T) {
+func TestGetInbox(t *testing.T) {
 	mockRepo := new(MockRepo)
-	mockPDF := new(MockPDFGen)
-	mockNotifier := new(MockNotifier)                           // Added
-	svc := NewReportingService(mockRepo, mockPDF, mockNotifier) // Updated
+	svc := NewSecretaryService(mockRepo, new(MockPDFGen), new(MockStorage), new(MockNotifier))
 
-	doc := &domain.Document{
-		ID:   1,
-		Type: domain.DocReportCard,
-		Data: domain.JSONMap{"foo": "bar"},
-	}
+	docs := []domain.Document{{ID: 1, Status: domain.DocStatusDraft}}
 
-	// Expectations
-	mockRepo.On("GetDocumentByID", uint(1)).Return(doc, nil)
-	mockPDF.On("GenerateReportCard", doc.Data).Return([]byte("%PDF..."), nil)
+	mockRepo.On("GetDocumentsByStatus", uint(1), domain.DocStatusDraft).Return(docs, nil)
 
-	// Act
-	pdf, err := svc.GetDocumentPDF(1)
-
-	// Assert
+	result, err := svc.GetInbox(1)
 	assert.NoError(t, err)
-	assert.Equal(t, []byte("%PDF..."), pdf)
+	assert.Len(t, result, 1)
 	mockRepo.AssertExpectations(t)
-	mockPDF.AssertExpectations(t)
 }
 
-func TestCreateReportCard(t *testing.T) {
+func TestApproveDocument(t *testing.T) {
 	mockRepo := new(MockRepo)
+	mockStorage := new(MockStorage)
 	mockNotifier := new(MockNotifier)
-	svc := NewReportingService(mockRepo, new(MockPDFGen), mockNotifier)
+	svc := NewSecretaryService(mockRepo, new(MockPDFGen), mockStorage, mockNotifier)
 
-	mockRepo.On("CreateDocument", mock.Anything).Return(nil)
-	mockNotifier.On("TriggerNotification", uint(1), domain.NotificationType("DOCUMENT_CREATED"), mock.Anything, mock.Anything, mock.MatchedBy(func(d domain.JSONMap) bool { return true })).Return(nil)
+	doc := &domain.Document{ID: 10, Status: domain.DocStatusDraft, Type: domain.DocReportCard, StudentID: new(uint)} // StudentID needed for notif
+	*doc.StudentID = 123
 
-	_, err := svc.CreateReportCard(1, 1, 1, "2023-24", domain.JSONMap{"grades": "A"}, 1)
+	mockRepo.On("GetDocumentByID", mock.Anything).Return(doc, nil)
+	mockStorage.On("Save", mock.Anything, mock.Anything).Return("/path/to/doc.pdf", nil)
+	mockRepo.On("AddSignature", mock.Anything).Return(nil)
+	mockRepo.On("UpdateDocument", mock.Anything).Return(nil)
+	mockNotifier.On("TriggerNotification", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	err := svc.ApproveDocument(10, 99)
 	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 	mockNotifier.AssertExpectations(t)
-}
-
-func TestSignDocument(t *testing.T) {
-	mockRepo := new(MockRepo)
-	mockNotifier := new(MockNotifier)                                   // Added
-	svc := NewReportingService(mockRepo, new(MockPDFGen), mockNotifier) // Updated
-
-	doc := &domain.Document{
-		ID:     1,
-		Status: domain.DocStatusDraft,
-	}
-
-	// Expectations
-	mockRepo.On("GetDocumentByID", uint(1)).Return(doc, nil)
-	mockRepo.On("AddSignature", mock.MatchedBy(func(sig *domain.DocumentSignature) bool {
-		return sig.DocumentID == 1 && sig.SignerID == 99 && sig.IsValid
-	})).Return(nil)
-
-	// Expect status update
-	mockRepo.On("UpdateDocument", mock.MatchedBy(func(d *domain.Document) bool {
-		return d.ID == 1 && d.Status == domain.DocStatusSigned
-	})).Return(nil)
-
-	// Act
-	err := svc.SignDocument(1, 99, "127.0.0.1")
-
-	// Assert
-	assert.NoError(t, err)
-	mockRepo.AssertExpectations(t)
 }

@@ -49,8 +49,8 @@ func (h *TeacherHandler) GetStudents(c *gin.Context) {
 
 // GetMarks returns marks for a class and subject
 func (h *TeacherHandler) GetMarks(c *gin.Context) {
-	classID, _ := strconv.Atoi(c.Param("classId"))
-	subjectID, _ := strconv.Atoi(c.Param("subjectId"))
+	// classID, _ := strconv.Atoi(c.Param("classId"))
+	// subjectID, _ := strconv.Atoi(c.Param("subjectId"))
 
 	// We'll fetch all marks for the class and filter by subject in service or here
 	// Ideally Service should have this method.
@@ -100,13 +100,18 @@ func (h *TeacherHandler) CreateMark(c *gin.Context) {
 
 // GetAbsences returns absences for a class and date
 func (h *TeacherHandler) GetAbsences(c *gin.Context) {
-	classID, _ := strconv.Atoi(c.Param("classId"))
-	dateStr := c.Query("date")
+	// classID := c.Param("classId") // Placeholder
+	// subjectID := c.Query("subject_id") // Placeholder
+	// Using mock data, parameters not used yet
+	// dateStr := c.Query("date")
 
-	date, err := time.Parse("2006-01-02", dateStr)
-	if err != nil {
-		date = time.Now()
-	}
+	/*
+			date, err := time.Parse("2006-01-02", dateStr)
+			if err != nil {
+				date = time.Now()
+			}
+		    _ = date // Silence usage error if uncommented
+	*/
 
 	// Need method in service
 	c.JSON(http.StatusOK, []domain.Absence{})

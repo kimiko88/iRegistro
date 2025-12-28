@@ -5,6 +5,7 @@ type ReportingRepository interface {
 	CreateDocument(doc *Document) error
 	GetDocumentByID(id uint) (*Document, error)
 	GetDocumentsBySchoolID(schoolID uint, docType DocumentType) ([]Document, error)
+	GetDocumentsByStatus(schoolID uint, status DocumentStatus) ([]Document, error)
 	GetDocumentsByStudentID(studentID uint) ([]Document, error)
 	UpdateDocument(doc *Document) error
 	DeleteDocument(id uint) error

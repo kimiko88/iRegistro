@@ -37,6 +37,12 @@ func (r *ReportingRepository) GetDocumentsBySchoolID(schoolID uint, docType doma
 	return docs, err
 }
 
+func (r *ReportingRepository) GetDocumentsByStatus(schoolID uint, status domain.DocumentStatus) ([]domain.Document, error) {
+	var docs []domain.Document
+	err := r.db.Where("school_id = ? AND status = ?", schoolID, status).Find(&docs).Error
+	return docs, err
+}
+
 func (r *ReportingRepository) GetDocumentsByStudentID(studentID uint) ([]domain.Document, error) {
 	var docs []domain.Document
 	err := r.db.Where("student_id = ?", studentID).Find(&docs).Error

@@ -6,8 +6,10 @@ import (
 	"github.com/k/iRegistro/internal/application/admin"
 	"github.com/k/iRegistro/internal/application/communication"
 	"github.com/k/iRegistro/internal/application/reporting"
+	"github.com/k/iRegistro/internal/application/secretary"
 	"github.com/k/iRegistro/internal/infrastructure/pdf"
 	"github.com/k/iRegistro/internal/infrastructure/persistence"
+	"github.com/k/iRegistro/internal/infrastructure/storage"
 	"github.com/k/iRegistro/internal/middleware"
 	"github.com/k/iRegistro/internal/presentation/http/handlers"
 	"github.com/k/iRegistro/internal/presentation/ws"
@@ -72,15 +74,18 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 
 		}
 
-		// --- Reporting Module Setup ---
+		// --- Service Initialization ---
+		// 1. Communication (Core for others)
+		commRepo := persistence.NewCommunicationRepository(db)
+		notifService := communication.NewNotificationService(commRepo)
+
+		// 2. Reporting (Uses Notification)
 		reportingRepo := persistence.NewReportingRepository(db)
 		pdfGen := pdf.NewMarotoGenerator()
-		reportingService := reporting.NewReportingService(reportingRepo, pdfGen)
+		reportingService := reporting.NewReportingService(reportingRepo, pdfGen, notifService)
 		reportingHandler := handlers.NewReportingHandler(reportingService)
 
 		// --- Communication Module Setup ---
-		commRepo := persistence.NewCommunicationRepository(db)
-		notifService := communication.NewNotificationService(commRepo)
 		msgService := communication.NewMessagingService(commRepo)
 		colService := communication.NewColloquiumService(commRepo, notifService)
 		commHandler := handlers.NewCommunicationHandler(notifService, msgService, colService)
@@ -167,6 +172,30 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 
 			// Orientation
 			reporting.POST("/orientation/participations", reportingHandler.RegisterOrientation)
+		}
+
+		// --- Secretary Module Setup ---
+		localStorage, _ := storage.NewLocalStorage("./uploads") // Simple local dir
+		secService := secretary.NewSecretaryService(reportingRepo, pdfGen, localStorage, notifService)
+		secHandler := handlers.NewSecretaryHandler(secService)
+
+		sec := r.Group("/secretary")
+		sec.Use(middleware.AuthMiddleware("your-secret-key")) // Add Role check
+		{
+			sec.GET("/documents/inbox", secHandler.GetInbox)
+			sec.GET("/documents/archive", secHandler.GetArchive)
+			sec.POST("/documents/:id/approve", secHandler.ApproveDocument)
+			sec.POST("/documents/:id/reject", secHandler.RejectDocument)
+			sec.POST("/documents/print-batch", secHandler.BatchPrint)
+			sec.POST("/documents/print-batch", secHandler.BatchPrint)
+		}
+
+		// --- Files Setup ---
+		fileHandler := handlers.NewFileHandler(localStorage)
+		files := r.Group("/files")
+		files.Use(middleware.AuthMiddleware("your-secret-key"))
+		{
+			files.GET("/download", fileHandler.DownloadFile)
 		}
 
 		// GraphQL
