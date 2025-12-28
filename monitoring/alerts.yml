@@ -1,0 +1,78 @@
+groups:
+  - name: api_alerts
+    interval: 1m
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_request_errors_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.instance }}"
+
+      - alert: SlowResponses
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 response time > 1s"
+          description: "95th percentile response time is {{ $value }}s"
+
+      - alert: DatabaseDown
+        expr: up{job="database"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database is down"
+          description: "Database {{ $labels.instance }} has been down for more than 1 minute"
+
+      - alert: OutOfMemory
+        expr: go_memstats_alloc_bytes / 1024 / 1024 > 900
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage > 900MB"
+          description: "Memory usage is {{ $value | humanize }}MB"
+
+      - alert: MultiTenantViolation
+        expr: unauthorized_access_attempts_total > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Unauthorized access attempt detected"
+          description: "{{ $value }} unauthorized access attempts detected"
+
+      - alert: HighWebSocketConnections
+        expr: active_websocket_connections > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of WebSocket connections"
+          description: "{{ $value }} active WebSocket connections"
+
+  - name: business_alerts
+    interval: 1m
+    rules:
+      - alert: NoMarksAdded
+        expr: increase(marks_added_total[1h]) == 0
+        for: 2h
+        labels:
+          severity: info
+        annotations:
+          summary: "No marks added in last 2 hours"
+          description: "This might be normal during off-hours"
+
+      - alert: DocumentGenerationFailed
+        expr: rate(documents_generation_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High document generation failure rate"
+          description: "{{ $value | humanizePercentage }} of document generations are failing"

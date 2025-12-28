@@ -1,0 +1,84 @@
+{
+    "dashboard": {
+        "title": "iRegistro - System Health",
+        "uid": "iregistro-system-health",
+        "tags": [
+            "registro",
+            "system"
+        ],
+        "timezone": "browser",
+        "schemaVersion": 30,
+        "version": 0,
+        "refresh": "5s",
+        "panels": [
+            {
+                "id": 1,
+                "title": "CPU Usage",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "targets": [
+                    {
+                        "expr": "rate(process_cpu_seconds_total[1m])",
+                        "legendFormat": "CPU Usage"
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "title": "Memory Usage (MB)",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "targets": [
+                    {
+                        "expr": "go_memstats_alloc_bytes / 1024 / 1024",
+                        "legendFormat": "Memory (MB)"
+                    }
+                ]
+            },
+            {
+                "id": 3,
+                "title": "Goroutines",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8
+                },
+                "targets": [
+                    {
+                        "expr": "go_goroutines",
+                        "legendFormat": "Active Goroutines"
+                    }
+                ]
+            },
+            {
+                "id": 4,
+                "title": "HTTP Request Rate",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8
+                },
+                "targets": [
+                    {
+                        "expr": "rate(http_requests_total[1m])",
+                        "legendFormat": "{{method}} {{path}}"
+                    }
+                ]
+            }
+        ]
+    }
+}

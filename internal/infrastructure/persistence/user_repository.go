@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"context"
 	"errors"
 
 	"github.com/k/iRegistro/internal/domain"
@@ -33,6 +34,18 @@ func (r *UserRepository) FindByEmail(email string) (*domain.User, error) {
 func (r *UserRepository) FindByID(id uint) (*domain.User, error) {
 	var user domain.User
 	if err := r.db.First(&user, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+// GetByExternalID finds a user by external ID (SPID/CIE identifier)
+func (r *UserRepository) GetByExternalID(ctx context.Context, externalID string) (*domain.User, error) {
+	var user domain.User
+	if err := r.db.Where("external_id = ?", externalID).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

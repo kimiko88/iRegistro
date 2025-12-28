@@ -15,6 +15,7 @@ import (
 	"github.com/k/iRegistro/internal/middleware"
 	"github.com/k/iRegistro/internal/presentation/http/handlers"
 	"github.com/k/iRegistro/internal/presentation/ws"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -25,11 +26,13 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.RequestIDMiddleware())
 	r.Use(middleware.RateLimitMiddleware())
+	r.Use(middleware.PrometheusMiddleware())
 
 	healthHandler := handlers.NewHealthHandler()
 
 	// Public routes
 	r.GET("/health", healthHandler.Check)
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	auth := r.Group("/auth")
 	{

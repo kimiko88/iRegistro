@@ -1,0 +1,160 @@
+{
+    "dashboard": {
+        "title": "iRegistro - Business KPIs",
+        "uid": "iregistro-business-kpis",
+        "tags": [
+            "registro",
+            "business"
+        ],
+        "timezone": "browser",
+        "schemaVersion": 30,
+        "version": 0,
+        "refresh": "30s",
+        "panels": [
+            {
+                "id": 1,
+                "title": "Marks Added (Hourly)",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "targets": [
+                    {
+                        "expr": "increase(marks_added_total[1h])",
+                        "legendFormat": "Marks/Hour"
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "title": "Absences Recorded (Hourly)",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "targets": [
+                    {
+                        "expr": "increase(absences_recorded_total[1h])",
+                        "legendFormat": "Absences/Hour"
+                    }
+                ]
+            },
+            {
+                "id": 3,
+                "title": "Documents Generated",
+                "type": "stat",
+                "gridPos": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 0,
+                    "y": 8
+                },
+                "targets": [
+                    {
+                        "expr": "documents_generated_total",
+                        "legendFormat": "Total Documents"
+                    }
+                ],
+                "options": {
+                    "graphMode": "area",
+                    "orientation": "auto"
+                }
+            },
+            {
+                "id": 4,
+                "title": "User Logins (Daily)",
+                "type": "stat",
+                "gridPos": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 6,
+                    "y": 8
+                },
+                "targets": [
+                    {
+                        "expr": "increase(users_login_total[24h])",
+                        "legendFormat": "Logins/Day"
+                    }
+                ],
+                "options": {
+                    "graphMode": "area",
+                    "orientation": "auto"
+                }
+            },
+            {
+                "id": 5,
+                "title": "Document Generation Errors",
+                "type": "stat",
+                "gridPos": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 12,
+                    "y": 8
+                },
+                "targets": [
+                    {
+                        "expr": "documents_generation_errors_total",
+                        "legendFormat": "Errors"
+                    }
+                ],
+                "options": {
+                    "graphMode": "area",
+                    "orientation": "auto",
+                    "colorMode": "background"
+                },
+                "thresholds": [
+                    {
+                        "value": 0,
+                        "color": "green"
+                    },
+                    {
+                        "value": 1,
+                        "color": "yellow"
+                    },
+                    {
+                        "value": 10,
+                        "color": "red"
+                    }
+                ]
+            },
+            {
+                "id": 6,
+                "title": "Unauthorized Access Attempts",
+                "type": "stat",
+                "gridPos": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 18,
+                    "y": 8
+                },
+                "targets": [
+                    {
+                        "expr": "unauthorized_access_attempts_total",
+                        "legendFormat": "Violations"
+                    }
+                ],
+                "options": {
+                    "graphMode": "area",
+                    "orientation": "auto",
+                    "colorMode": "background"
+                },
+                "thresholds": [
+                    {
+                        "value": 0,
+                        "color": "green"
+                    },
+                    {
+                        "value": 1,
+                        "color": "red"
+                    }
+                ]
+            }
+        ]
+    }
+}

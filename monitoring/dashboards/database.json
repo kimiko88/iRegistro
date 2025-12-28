@@ -1,0 +1,67 @@
+{
+    "dashboard": {
+        "title": "iRegistro - Database Metrics",
+        "uid": "iregistro-database",
+        "tags": [
+            "registro",
+            "database"
+        ],
+        "timezone": "browser",
+        "schemaVersion": 30,
+        "version": 0,
+        "refresh": "10s",
+        "panels": [
+            {
+                "id": 1,
+                "title": "Query Duration",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "targets": [
+                    {
+                        "expr": "rate(db_query_duration_seconds_sum[5m]) / rate(db_query_duration_seconds_count[5m])",
+                        "legendFormat": "{{operation}}"
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "title": "Connection Pool Size",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "targets": [
+                    {
+                        "expr": "db_connection_pool_size",
+                        "legendFormat": "Connections"
+                    }
+                ]
+            },
+            {
+                "id": 3,
+                "title": "Slow Queries",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 24,
+                    "x": 0,
+                    "y": 8
+                },
+                "targets": [
+                    {
+                        "expr": "rate(db_slow_queries_total[1m])",
+                        "legendFormat": "Slow Queries/min"
+                    }
+                ]
+            }
+        ]
+    }
+}

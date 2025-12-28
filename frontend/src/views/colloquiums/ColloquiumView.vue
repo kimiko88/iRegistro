@@ -1,18 +1,59 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const teachers = ref([
-    { id: 1, name: 'Prof. Rossi (Math)', slots: [{ id: 101, time: '2023-11-01 10:00' }, { id: 102, time: '2023-11-01 10:30' }] },
-    { id: 2, name: 'Prof. Verdi (History)', slots: [] },
-]);
+import communicationApi from '@/services/communication';
+import { useUIStore } from '@/stores/ui';
+import { onMounted } from 'vue';
+
+const teachers = ref<any[]>([]); // This view logic might need adjustment if API returns flat slots
+// Adapting: Fetch available slots and group by teacher? 
+// Or fetching teachers first? 
+// For simplicity, let's assume we fetch a list of teachers with slots, 
+// OR we fetch slots and group them locally.
+// Let's implement fetchSlots and grouping for now.
+
+const ui = useUIStore();
+
+onMounted(async () => {
+    ui.setLoading(true);
+    try {
+        // Mocking structure match since API likely returns flat list of slots
+        // We simulate fetching "Teachers with Slots" or we fetch slots and transform.
+        // For this existing UI, let's try to group functionality.
+        const res = await communicationApi.getAvailableSlots(); 
+        // Assuming res.data is [ {id, teacher_id, teacher_name, time...} ]
+        
+        // Grouping logic (simplified for integration):
+        const slots = res.data || [];
+        const groups: Record<number, any> = {};
+        
+        slots.forEach((s: any) => {
+            if (!groups[s.teacher_id]) {
+                groups[s.teacher_id] = { id: s.teacher_id, name: s.teacher_name || 'Teacher ' + s.teacher_id, slots: [] };
+            }
+            groups[s.teacher_id].slots.push(s);
+        });
+        teachers.value = Object.values(groups);
+
+    } catch (e) {
+        console.error("Failed to fetch slots", e);
+    } finally {
+        ui.setLoading(false);
+    }
+});
 
 const selectedTeacher = ref<any>(null);
 
-function bookSlot(slot: any) {
+async function bookSlot(slot: any) {
     if (confirm(`Book appointment with ${selectedTeacher.value.name} at ${slot.time}?`)) {
-        alert('Booking confirmed!');
-        // remove slot locally
-        selectedTeacher.value.slots = selectedTeacher.value.slots.filter((s: any) => s.id !== slot.id);
+        try {
+            await communicationApi.bookSlot(slot.id);
+            alert('Booking confirmed!');
+            // remove slot locally
+            selectedTeacher.value.slots = selectedTeacher.value.slots.filter((s: any) => s.id !== slot.id);
+        } catch (e) {
+            alert('Booking failed');
+        }
     }
 }
 </script>

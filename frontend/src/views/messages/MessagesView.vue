@@ -1,11 +1,24 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-// Mock data for messages
-const messages = ref([
-    { id: 1, sender: 'Prof. Bianchi', subject: 'Math Homework', date: '2023-10-25', preview: 'Please remember to complete...' },
-    { id: 2, sender: 'School Office', subject: 'Holiday closing', date: '2023-10-20', preview: 'The school will be closed...' },
-]);
+import communicationApi from '@/services/communication';
+import { useUIStore } from '@/stores/ui';
+import { onMounted } from 'vue';
+
+const messages = ref<any[]>([]);
+const ui = useUIStore();
+
+onMounted(async () => {
+    ui.setLoading(true);
+    try {
+        const res = await communicationApi.getConversations();
+        messages.value = res.data;
+    } catch (e) {
+        console.error("Failed to fetch conversations", e);
+    } finally {
+        ui.setLoading(false);
+    }
+});
 
 const selectedMessage = ref<any>(null);
 
@@ -52,7 +65,7 @@ function selectMessage(msg: any) {
                   </p>
               </div>
               <div class="absolute bottom-4 right-4">
-                  <button class="btn btn-primary" @click="alert('Reply feature coming soon')">Reply</button>
+                  <button class="btn btn-primary" @click="() => { window.alert('Reply feature coming soon') }">Reply</button>
               </div>
           </div>
           <div v-else class="flex items-center justify-center h-full text-lg opacity-50">
