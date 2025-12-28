@@ -42,6 +42,14 @@ func (r *UserRepository) FindByID(id uint) (*domain.User, error) {
 	return &user, nil
 }
 
+func (r *UserRepository) FindAll(schoolID uint) ([]domain.User, error) {
+	var users []domain.User
+	if err := r.db.Where("school_id = ?", schoolID).Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 // GetByExternalID finds a user by external ID (SPID/CIE identifier)
 func (r *UserRepository) GetByExternalID(ctx context.Context, externalID string) (*domain.User, error) {
 	var user domain.User

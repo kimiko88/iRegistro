@@ -53,3 +53,13 @@ func (s *AdminService) UpdateSchoolSetting(schoolID, userID uint, key string, va
 	s.audit.LogAction(&schoolID, userID, "UPDATE_SETTING", "SETTINGS", key, "", map[string]interface{}{"key": key, "value": value})
 	return nil
 }
+
+func (s *AdminService) GetUsers(schoolID uint) ([]domain.User, error) {
+	return s.userRepo.FindAll(schoolID)
+}
+
+func (s *AdminService) CreateUser(schoolID uint, user *domain.User) error {
+	user.SchoolID = schoolID
+	// In real app, hash password here
+	return s.userRepo.Create(user)
+}

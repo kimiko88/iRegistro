@@ -54,6 +54,13 @@ CREATE TABLE users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     deleted_at TIMESTAMP WITH TIME ZONE,
 
+    -- Auth/Identity
+    auth_method VARCHAR(50) DEFAULT 'LOCAL', -- LOCAL, SPID, CIE
+    sp_id_provider VARCHAR(100),
+    cie_serial_number VARCHAR(100),
+    external_id VARCHAR(100),
+    last_auth_at TIMESTAMP WITH TIME ZONE,
+
     -- Constraints
     CONSTRAINT idx_users_email_school UNIQUE (email, school_id)
 );
@@ -62,15 +69,15 @@ CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_school_id ON users(school_id);
 
 -- 4. User Sessions (Refresh Tokens)
-CREATE TABLE user_sessions (
+CREATE TABLE sessions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    refresh_token VARCHAR(255) NOT NULL UNIQUE,
+    token_hash TEXT NOT NULL UNIQUE,
     user_agent VARCHAR(255),
     ip_address VARCHAR(45),
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    is_revoked BOOLEAN DEFAULT FALSE
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX idx_sessions_user_id ON user_sessions(user_id);

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -80,7 +81,8 @@ func (m *MockRepoForTeacher) CreateStudent(student *domain.Student) error       
 func (m *MockRepoForTeacher) GetStudentByID(id uint) (*domain.Student, error)        { return nil, nil }
 func (m *MockRepoForTeacher) EnrollStudent(enrollment *domain.ClassEnrollment) error { return nil }
 func (m *MockRepoForTeacher) GetStudentsByClassID(classID uint, year string) ([]domain.Student, error) {
-	return nil, nil
+	args := m.Called(classID, year)
+	return args.Get(0).([]domain.Student), args.Error(1)
 }
 
 // Subject
@@ -90,7 +92,8 @@ func (m *MockRepoForTeacher) AssignSubjectToClass(assignment *domain.ClassSubjec
 	return nil
 }
 func (m *MockRepoForTeacher) GetAssignmentsByTeacherID(teacherID uint) ([]domain.ClassSubjectAssignment, error) {
-	return nil, nil
+	args := m.Called(teacherID)
+	return args.Get(0).([]domain.ClassSubjectAssignment), args.Error(1)
 }
 
 // Mark
@@ -99,7 +102,8 @@ func (m *MockRepoForTeacher) CreateMark(mark *domain.Mark) error {
 	return args.Error(0)
 }
 func (m *MockRepoForTeacher) GetMarksByStudentID(studentID uint, classID uint, subjectID uint) ([]domain.Mark, error) {
-	return nil, nil
+	args := m.Called(studentID, classID, subjectID)
+	return args.Get(0).([]domain.Mark), args.Error(1)
 }
 func (m *MockRepoForTeacher) GetMarksByClassID(classID uint) ([]domain.Mark, error) { return nil, nil }
 func (m *MockRepoForTeacher) UpdateMark(mark *domain.Mark) error                    { return nil }
@@ -128,6 +132,10 @@ func (m *MockUserRepoForTeacher) FindBySchoolID(schoolID uint) ([]domain.User, e
 	return nil, nil
 }
 func (m *MockUserRepoForTeacher) Delete(id uint) error { return nil }
+func (m *MockUserRepoForTeacher) GetByExternalID(ctx context.Context, externalID string) (*domain.User, error) {
+	return nil, nil
+}
+func (m *MockUserRepoForTeacher) FindAll(schoolID uint) ([]domain.User, error) { return nil, nil }
 
 func TestCreateMark(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -166,5 +174,87 @@ func TestCreateMark(t *testing.T) {
 	h.CreateMark(c)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
+	mockAcadRepo.AssertExpectations(t)
+}
+
+func TestGetClasses(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockAcadRepo := new(MockRepoForTeacher)
+	mockUserRepo := new(MockUserRepoForTeacher)
+
+	// Mock data
+	assignments := []domain.ClassSubjectAssignment{
+		{
+			ClassID:   1,
+			SubjectID: 1,
+			Class: domain.Class{
+				ID:   1,
+				Name: "1A",
+			},
+			Subject: domain.Subject{
+				ID:   1,
+				Name: "Math",
+			},
+		},
+	}
+
+	mockAcadRepo.On("GetAssignmentsByTeacherID", uint(1)).Return(assignments, nil)
+
+	svc := academic.NewAcademicService(mockAcadRepo, mockUserRepo, nil)
+	h := NewTeacherHandler(svc)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("userID", uint(1))
+
+	c.Request, _ = http.NewRequest("GET", "/teacher/classes", nil)
+
+	h.GetClasses(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response []domain.ClassSubjectAssignment
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Len(t, response, 1)
+	assert.Equal(t, "1A", response[0].Class.Name)
+
+	mockAcadRepo.AssertExpectations(t)
+}
+
+func TestGetStudents(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockAcadRepo := new(MockRepoForTeacher)
+	mockUserRepo := new(MockUserRepoForTeacher)
+
+	students := []domain.Student{
+		{User: domain.User{ID: 10, FirstName: "Mario", LastName: "Rossi"}},
+	}
+
+	// Update MockRepoForTeacher to support GetStudentsByClassID with m.Called if not already
+	// Since I cannot verify previous edit applied efficiently here without checking, I'll rely on "Update mock methods" part being correct or fix it if it fails compilation.
+	// Actually I missed updating GetStudentsByClassID in previous chunk. I should do it now or in separate call.
+	// I'll assume I need to update it here or it will panic/return nil.
+	// The previous chunk only updated GetAssignments... and GetMarks...
+	// I will update the mock method here in a separate block if I could, but I can't do multiple replace calls in one go easily if they overlap or are far apart.
+	// I will add the test assuming the mock is updated, then I will update the mock in another call if needed, OR I will try to update it in the previous call if I can edit the tool call? No I can't.
+	// I will assume I need to update `GetStudentsByClassID` in the mock.
+
+	mockAcadRepo.On("GetStudentsByClassID", uint(1), "2024-25").Return(students, nil)
+
+	svc := academic.NewAcademicService(mockAcadRepo, mockUserRepo, nil)
+	h := NewTeacherHandler(svc)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = gin.Params{{Key: "classId", Value: "1"}}
+
+	c.Request, _ = http.NewRequest("GET", "/teacher/classes/1/students", nil)
+
+	h.GetStudents(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 	mockAcadRepo.AssertExpectations(t)
 }

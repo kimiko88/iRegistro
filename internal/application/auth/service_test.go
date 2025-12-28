@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -79,6 +80,10 @@ func (m *MockUserRepository) FindByEmail(email string) (*domain.User, error) {
 
 func (m *MockUserRepository) FindByID(id uint) (*domain.User, error) { return nil, nil }
 func (m *MockUserRepository) Update(user *domain.User) error         { return nil }
+func (m *MockUserRepository) GetByExternalID(ctx context.Context, externalID string) (*domain.User, error) {
+	return nil, nil
+}
+func (m *MockUserRepository) FindAll(schoolID uint) ([]domain.User, error) { return nil, nil }
 
 type MockAuthRepository struct {
 	sessions []*domain.Session
@@ -133,18 +138,19 @@ func TestLogin(t *testing.T) {
 	mockUserRepo.users[user.Email] = user
 
 	// Test Success
-	token, refToken, err := service.Login("login@example.com", "password", "", "127.0.0.1", "test-agent")
+	userWrapper, token, refToken, err := service.Login("login@example.com", "password", "", "127.0.0.1", "test-agent")
 	assert.NoError(t, err)
+	assert.NotNil(t, userWrapper)
 	assert.NotEmpty(t, token)
 	assert.NotEmpty(t, refToken)
 
 	// Test Wrong Password
-	_, _, err = service.Login("login@example.com", "wrong", "", "127.0.0.1", "test-agent")
+	_, _, _, err = service.Login("login@example.com", "wrong", "", "127.0.0.1", "test-agent")
 	assert.Error(t, err)
 	assert.Equal(t, "invalid credentials", err.Error())
 
 	// Test User Not Found
-	_, _, err = service.Login("unknown@example.com", "password", "", "127.0.0.1", "test-agent")
+	_, _, _, err = service.Login("unknown@example.com", "password", "", "127.0.0.1", "test-agent")
 	assert.Error(t, err)
 }
 
@@ -168,12 +174,12 @@ func TestAccountLockout(t *testing.T) {
 
 	// Fail 5 times
 	for i := 0; i < 5; i++ {
-		_, _, err := service.Login("lockout@example.com", "wrong", "", "127.0.0.1", "test-agent")
+		_, _, _, err := service.Login("lockout@example.com", "wrong", "", "127.0.0.1", "test-agent")
 		assert.Error(t, err)
 	}
 
 	// 6th attempt should be locked
-	_, _, err := service.Login("lockout@example.com", "wrong", "", "127.0.0.1", "test-agent")
+	_, _, _, err := service.Login("lockout@example.com", "wrong", "", "127.0.0.1", "test-agent")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "account locked")
 }

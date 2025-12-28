@@ -27,7 +27,9 @@ func TestMultiTenantIsolation(t *testing.T) {
 	req.Header.Add("Authorization", "Bearer "+tokenA)
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to send request: %v. Is the server running?", err)
+	}
 	defer resp.Body.Close()
 
 	// 4. Assert Forbidden or Not Found (depending on impl preference for security)

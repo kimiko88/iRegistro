@@ -31,14 +31,17 @@ export const useAdminStore = defineStore('admin', {
             const ui = useUIStore();
             ui.setLoading(true);
             try {
-                // const res = await adminApi.getUsers(params);
-                // this.users = res.data;
-
-                // Mock
-                this.users = [
-                    { id: 1, name: 'Mario Rossi', email: 'mario@edu.it', role: 'Teacher', status: 'Active' },
-                    { id: 2, name: 'Luigi Verdi', email: 'luigi@edu.it', role: 'Student', status: 'Active' }
-                ];
+                const res = await adminApi.getUsers(params);
+                this.users = res.data.map((u: any) => ({
+                    id: u.id,
+                    name: `${u.first_name} ${u.last_name}`,
+                    email: u.email,
+                    role: u.role,
+                    status: u.locked_until ? 'Locked' : 'Active'
+                }));
+            } catch (error) {
+                console.error('Failed to fetch users:', error);
+                ui.addNotification({ type: 'error', message: 'Failed to load users' });
             } finally {
                 ui.setLoading(false);
             }

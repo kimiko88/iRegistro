@@ -62,7 +62,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, refreshToken, err := h.service.Login(req.Email, req.Password, req.OTPCode, c.ClientIP(), c.Request.UserAgent())
+	user, token, refreshToken, err := h.service.Login(req.Email, req.Password, req.OTPCode, c.ClientIP(), c.Request.UserAgent())
 	if err != nil {
 		if err == domain.ErrInvalidCredentials {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
@@ -86,6 +86,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": token,
 		"expires_in":   900, // 15 minutes
+		"role":         user.Role,
 	})
 }
 

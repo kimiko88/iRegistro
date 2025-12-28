@@ -75,18 +75,18 @@ func (s *AuthService) Register(user *domain.User, password string) error {
 	return s.userRepo.Create(user)
 }
 
-func (s *AuthService) Login(email, password, otpCode, ip, userAgent string) (string, string, error) {
+func (s *AuthService) Login(email, password, otpCode, ip, userAgent string) (*domain.User, string, string, error) {
 	user, err := s.userRepo.FindByEmail(email)
 	if err != nil {
-		return "", "", err
+		return nil, "", "", err
 	}
 	if user == nil {
-		return "", "", domain.ErrInvalidCredentials
+		return nil, "", "", domain.ErrInvalidCredentials
 	}
 
 	// Check Lockout
 	if user.LockedUntil != nil && time.Now().Before(*user.LockedUntil) {
-		return "", "", fmt.Errorf("account locked until %s", user.LockedUntil.Format(time.RFC3339))
+		return nil, "", "", fmt.Errorf("account locked until %s", user.LockedUntil.Format(time.RFC3339))
 	}
 
 	if err := CheckPassword(password, user.PasswordHash); err != nil {
@@ -97,16 +97,16 @@ func (s *AuthService) Login(email, password, otpCode, ip, userAgent string) (str
 			user.LockedUntil = &lockTime
 		}
 		s.userRepo.Update(user)
-		return "", "", domain.ErrInvalidCredentials
+		return nil, "", "", domain.ErrInvalidCredentials
 	}
 
 	// Check 2FA
 	if user.TwoFAEnabled {
 		if otpCode == "" {
-			return "", "", fmt.Errorf("2fa required") // Should define proper error
+			return nil, "", "", fmt.Errorf("2fa required") // Should define proper error
 		}
 		if !totp.Validate(otpCode, user.TwoFASecret) {
-			return "", "", fmt.Errorf("invalid 2fa code")
+			return nil, "", "", fmt.Errorf("invalid 2fa code")
 		}
 	}
 
@@ -120,14 +120,14 @@ func (s *AuthService) Login(email, password, otpCode, ip, userAgent string) (str
 	// Generate Access Token
 	accessToken, _, err := GenerateAccessToken(user, s.jwtSecret, s.accessDuration)
 	if err != nil {
-		return "", "", err
+		return nil, "", "", err
 	}
 
 	// Generate Refresh Token (simplified for now, usually a random string)
 	refreshToken, _, err := GenerateAccessToken(user, s.jwtSecret, s.refreshDuration)
 	// Ideally Refresh Token is opaque, but for simplicity reusing JWT or random hex
 	if err != nil {
-		return "", "", err
+		return nil, "", "", err
 	}
 
 	// Store Session
@@ -139,10 +139,10 @@ func (s *AuthService) Login(email, password, otpCode, ip, userAgent string) (str
 		UserAgent: userAgent,
 	}
 	if err := s.authRepo.CreateSession(session); err != nil {
-		return "", "", err
+		return nil, "", "", err
 	}
 
-	return accessToken, refreshToken, nil
+	return user, accessToken, refreshToken, nil
 }
 
 // 2FA Methods

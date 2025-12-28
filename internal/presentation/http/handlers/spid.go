@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/xml"
 	"fmt"
 	"net/http"
 	"os"
@@ -57,14 +58,13 @@ func (h *SPIDHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// Redirect to SPID aggregator
-	redirectURL, err := binding.GetSignedRedirectURL(req, relayState)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sign SAML request"})
-		return
+	// Build redirect URL with SAML request and relay state
+	redirectURL := h.serviceProvider.GetSSOBindingLocation(binding) + "?SAMLRequest=" + req.ID
+	if relayState != "" {
+		redirectURL += "&RelayState=" + relayState
 	}
 
-	c.Redirect(http.StatusFound, redirectURL.String())
+	c.Redirect(http.StatusFound, redirectURL)
 }
 
 // Callback handles SPID SAML assertion callback
@@ -144,5 +144,11 @@ func (h *SPIDHandler) Callback(c *gin.Context) {
 // GET /auth/spid/metadata
 func (h *SPIDHandler) Metadata(c *gin.Context) {
 	metadata := h.serviceProvider.Metadata()
-	c.Data(http.StatusOK, "application/xml", metadata)
+	// Marshal EntityDescriptor to XML bytes
+	xmlBytes, err := xml.Marshal(metadata)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate metadata"})
+		return
+	}
+	c.Data(http.StatusOK, "application/xml", xmlBytes)
 }

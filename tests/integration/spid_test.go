@@ -59,6 +59,10 @@ func (m *MockUserRepository) Update(user *domain.User) error {
 	return nil
 }
 
+func (m *MockUserRepository) FindAll(schoolID uint) ([]domain.User, error) {
+	return nil, nil
+}
+
 // createMockSAMLAssertion creates a mock SAML assertion for testing
 func createMockSAMLAssertion(taxCode, name, familyName, email, provider string) *saml.Assertion {
 	now := time.Now()

@@ -7,6 +7,7 @@ type UserRepository interface {
 	FindByEmail(email string) (*User, error)
 	FindByID(id uint) (*User, error)
 	GetByExternalID(ctx context.Context, externalID string) (*User, error)
+	FindAll(schoolID uint) ([]User, error)
 	Update(user *User) error
 }
 

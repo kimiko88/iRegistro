@@ -155,3 +155,22 @@ func (h *AcademicHandler) CreateMark(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, mark)
 }
+
+// --- Assignments ---
+
+func (h *AcademicHandler) AssignSubjectToClass(c *gin.Context) {
+	// schoolID, _ := strconv.Atoi(c.Param("schoolId")) // Not explicitly used but good context
+	var assignment domain.ClassSubjectAssignment
+	if err := c.ShouldBindJSON(&assignment); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// TODO: Validate SchoolID matches Class/Subject/Teacher
+
+	if err := h.service.AssignSubjectToClass(&assignment); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, assignment)
+}

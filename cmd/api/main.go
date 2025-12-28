@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/k/iRegistro/internal/application/auth"
 	"github.com/k/iRegistro/internal/config"
 	"github.com/k/iRegistro/internal/infrastructure/logger"
@@ -15,6 +16,9 @@ import (
 )
 
 func main() {
+	// Load .env file
+	_ = godotenv.Load() // Ignore error if .env doesn't exist
+
 	// 1. Load Configuration
 	cfg, err := config.Load()
 	if err != nil {

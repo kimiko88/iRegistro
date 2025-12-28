@@ -137,6 +137,7 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 		{
 			adm.GET("/settings", adminHandler.GetSettings)
 			adm.PUT("/settings", adminHandler.UpdateSetting)
+			adm.GET("/users", adminHandler.GetUsers)
 			adm.GET("/audit-logs", adminHandler.GetAuditLogs)
 			adm.POST("/data-export", adminHandler.RequestExport)
 		}
@@ -194,8 +195,20 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 			sec.GET("/documents/archive", secHandler.GetArchive)
 			sec.POST("/documents/:id/approve", secHandler.ApproveDocument)
 			sec.POST("/documents/:id/reject", secHandler.RejectDocument)
-			sec.POST("/documents/print-batch", secHandler.BatchPrint)
-			sec.POST("/documents/print-batch", secHandler.BatchPrint)
+			sec.POST("/documents/:id/print-batch", secHandler.BatchPrint)
+		}
+
+		// --- Secretary Academic Management ---
+		secAcademic := r.Group("/schools/:schoolId")
+		secAcademic.Use(middleware.AuthMiddleware("your-secret-key"), middleware.RBACMiddleware(domain.RoleSecretary, domain.RoleAdmin))
+		{
+			// Class Management
+			secAcademic.POST("/classes", academicHandler.CreateClass)
+			secAcademic.POST("/assignments", academicHandler.AssignSubjectToClass)
+
+			// Additional management if needed
+			// secAcademic.POST("/students", academicHandler.CreateStudent)
+			// secAcademic.POST("/enrollments", academicHandler.EnrollStudent)
 		}
 
 		// --- Files Setup ---

@@ -67,14 +67,14 @@ const routes: Array<RouteRecordRaw> = [
                 path: 'teacher',
                 name: 'TeacherDashboard',
                 component: TeacherDashboard,
-                meta: { requiresRole: 'Insegnante' } // Updated role to match backend seed (Insegnante)
+                meta: { requiresRole: 'Insegnante' }
             },
             {
                 path: 'parent',
                 component: ParentDashboard,
-                meta: { requiresRole: 'Parent' },
+                meta: { requiresRole: 'Genitore' },
                 children: [
-                    { path: '', name: 'ParentDashboard', component: { template: '' } }, // Default view logic handled in dashboard
+                    { path: '', name: 'ParentDashboard', component: { template: '' } }, // Default view logic handling
                     { path: 'marks', component: MarksView },
                     { path: 'absences', component: AbsencesView },
                     { path: 'messages', component: MessagesView },
@@ -85,7 +85,7 @@ const routes: Array<RouteRecordRaw> = [
             {
                 path: 'student',
                 component: StudentDashboard,
-                meta: { requiresRole: 'Student' },
+                meta: { requiresRole: 'Studente' },
                 children: [
                     { path: '', name: 'StudentDashboard', component: { template: '' } },
                     { path: 'marks', component: MarksView },
@@ -97,37 +97,49 @@ const routes: Array<RouteRecordRaw> = [
                 path: 'secretary',
                 name: 'SecretaryInbox',
                 component: DocumentManagement,
-                meta: { requiresRole: 'Secretary' }
+                meta: { requiresRole: 'Segreteria' }
+            },
+            {
+                path: 'secretary',
+                name: 'SecretaryInbox',
+                component: DocumentManagement,
+                meta: { requiresRole: 'Segreteria' }
+            },
+            {
+                path: 'secretary/classes',
+                name: 'SecretaryClassManagement',
+                component: () => import('@/views/secretary/ClassManagement.vue'),
+                meta: { requiresRole: 'Segreteria' }
             },
             {
                 path: 'secretary/archive',
                 name: 'SecretaryArchive',
                 component: Archive,
-                meta: { requiresRole: 'Secretary' }
+                meta: { requiresRole: 'Segreteria' }
             },
             {
                 path: 'director',
                 name: 'DirectorDashboard',
                 component: DirectorDashboard,
-                meta: { requiresRole: 'Director' }
+                meta: { requiresRole: 'Dirigente' }
             },
             {
                 path: 'director/signing',
                 name: 'DocumentSigning',
                 component: DocumentSigning,
-                meta: { requiresRole: 'Director' }
+                meta: { requiresRole: 'Dirigente' }
             },
             {
                 path: 'director/approvals',
                 name: 'RequestApprovals',
                 component: RequestApprovals,
-                meta: { requiresRole: 'Director' }
+                meta: { requiresRole: 'Dirigente' }
             },
             {
                 path: 'director/reports',
                 name: 'SchoolReports',
                 component: SchoolReports,
-                meta: { requiresRole: 'Director' }
+                meta: { requiresRole: 'Dirigente' }
             },
             // Add other routes here
         ]

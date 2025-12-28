@@ -12,7 +12,7 @@ export const useAuthStore = defineStore('auth', {
         async login(credentials: any) {
             try {
                 const response = await api.post('/auth/login', credentials);
-                this.token = response.data.token;
+                this.token = response.data.access_token;
                 this.isAuthenticated = true;
                 this.user = { role: response.data.role }; // basic simulation
                 localStorage.setItem('token', this.token);

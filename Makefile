@@ -1,4 +1,20 @@
-.PHONY: test test-unit test-integration test-e2e test-security test-benchmark coverage
+.PHONY: up down run-backend run-frontend test test-unit test-integration test-e2e test-security test-benchmark coverage
+
+# Start infrastructure
+up:
+	docker-compose up -d
+
+# Stop infrastructure
+down:
+	docker-compose down
+
+# Run backend
+run-backend:
+	go run cmd/api/main.go
+
+# Run frontend
+run-frontend:
+	cd frontend && npm install && npm run dev
 
 # Run all unit tests (default)
 test: test-unit

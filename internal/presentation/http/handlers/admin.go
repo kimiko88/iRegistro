@@ -50,6 +50,16 @@ func (h *AdminHandler) GetSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, settings)
 }
 
+func (h *AdminHandler) GetUsers(c *gin.Context) {
+	schoolIDVal, _ := c.Get("schoolID")
+	users, err := h.adminService.GetUsers(schoolIDVal.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, users)
+}
+
 func (h *AdminHandler) UpdateSetting(c *gin.Context) {
 	var req struct {
 		Key   string                 `json:"key"`
