@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/k/iRegistro/internal/application/academic"
+	"github.com/k/iRegistro/internal/application/communication"
 	"github.com/k/iRegistro/internal/application/reporting"
 	"github.com/k/iRegistro/internal/infrastructure/pdf"
 	"github.com/k/iRegistro/internal/infrastructure/persistence"
@@ -74,6 +75,33 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 		pdfGen := pdf.NewMarotoGenerator()
 		reportingService := reporting.NewReportingService(reportingRepo, pdfGen)
 		reportingHandler := handlers.NewReportingHandler(reportingService)
+
+		// --- Communication Module Setup ---
+		commRepo := persistence.NewCommunicationRepository(db)
+		notifService := communication.NewNotificationService(commRepo)
+		msgService := communication.NewMessagingService(commRepo)
+		colService := communication.NewColloquiumService(commRepo, notifService)
+		commHandler := handlers.NewCommunicationHandler(notifService, msgService, colService)
+
+		// Communication Routes
+		comm := r.Group("/communication")
+		comm.Use(middleware.AuthMiddleware("your-secret-key"))
+		{
+			// Notifications
+			comm.GET("/notifications", commHandler.GetNotifications)
+			comm.POST("/notifications/:id/read", commHandler.ReadNotification)
+
+			// Messaging
+			comm.POST("/conversations", commHandler.CreateConversation)
+			comm.GET("/conversations", commHandler.GetConversations)
+			comm.GET("/conversations/:id/messages", commHandler.GetMessages)
+			comm.POST("/conversations/:id/messages", commHandler.SendMessage)
+
+			// Colloquiums
+			comm.POST("/slots", commHandler.CreateSlot) // Start simple, refine path usually /teachers/:id/slots
+			comm.GET("/slots/available", commHandler.GetAvailableSlots)
+			comm.POST("/bookings", commHandler.BookSlot)
+		}
 
 		// Route Group: /schools/:schoolId (Extensions)
 		// Assuming we are within `schools` group context or similar, but structure above closes brackets.

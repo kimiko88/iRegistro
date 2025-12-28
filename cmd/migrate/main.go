@@ -25,7 +25,13 @@ func main() {
 	}
 
 	logger.Info("Running migrations...")
-	if err := db.AutoMigrate(&domain.User{}, &domain.Session{}, &domain.RefreshToken{}); err != nil {
+	if err := db.AutoMigrate(
+		&domain.User{}, &domain.Session{}, &domain.RefreshToken{},
+		// Communication
+		&domain.Notification{}, &domain.NotificationPreference{},
+		&domain.Conversation{}, &domain.Message{},
+		&domain.ColloquiumSlot{}, &domain.ColloquiumBooking{},
+	); err != nil {
 		logger.Fatal("Failed to migrate database", zap.Error(err))
 	}
 	sqlDB, err := db.DB()
