@@ -26,6 +26,7 @@ type AcademicRepository interface {
 	CreateSubject(subject *Subject) error
 	GetSubjectByID(id uint) (*Subject, error)
 	AssignSubjectToClass(assignment *ClassSubjectAssignment) error
+	GetAssignmentsByTeacherID(teacherID uint) ([]ClassSubjectAssignment, error) // Added
 
 	// Mark
 	CreateMark(mark *Mark) error

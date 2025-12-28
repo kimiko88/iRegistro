@@ -5,12 +5,16 @@ import (
 )
 
 type AcademicService struct {
-	repo domain.AcademicRepository
+	repo     domain.AcademicRepository
+	userRepo domain.UserRepository
+	notifier domain.NotificationService
 }
 
-func NewAcademicService(repo domain.AcademicRepository) *AcademicService {
+func NewAcademicService(repo domain.AcademicRepository, userRepo domain.UserRepository, notifier domain.NotificationService) *AcademicService {
 	return &AcademicService{
-		repo: repo,
+		repo:     repo,
+		userRepo: userRepo,
+		notifier: notifier,
 	}
 }
 
@@ -86,15 +90,40 @@ func (s *AcademicService) AssignSubjectToClass(assignment *domain.ClassSubjectAs
 	return s.repo.AssignSubjectToClass(assignment)
 }
 
+func (s *AcademicService) GetAssignmentsByTeacherID(teacherID uint) ([]domain.ClassSubjectAssignment, error) {
+	return s.repo.GetAssignmentsByTeacherID(teacherID)
+}
+
 // --- Marks ---
 
 func (s *AcademicService) CreateMark(mark *domain.Mark) error {
 	// TODO: Maybe add validation logic here (e.g. check weight sum, check teacher assignment)
-	return s.repo.CreateMark(mark)
+	if err := s.repo.CreateMark(mark); err != nil {
+		return err
+	}
+	if s.notifier != nil {
+		s.notifier.NotifyMarkAdded(mark)
+	}
+	return nil
 }
 
 func (s *AcademicService) GetMarksByStudentID(studentID, classID, subjectID uint) ([]domain.Mark, error) {
 	return s.repo.GetMarksByStudentID(studentID, classID, subjectID)
+}
+
+// --- Teacher/User ---
+
+func (s *AcademicService) GetTeacherByID(id uint) (*domain.User, error) {
+	user, err := s.userRepo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, domain.ErrUserNotFound
+	}
+	// Optional: Check Role
+	// if user.Role != domain.RoleTeacher { return nil, fmt.Errorf("user is not a teacher") }
+	return user, nil
 }
 
 // --- Logic implementations to verify via TDD ---

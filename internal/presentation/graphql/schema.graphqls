@@ -102,3 +102,75 @@ type Query {
   student(id: ID!): Student
   teacher(id: ID!): Teacher
 }
+
+# --- Reporting ---
+
+type ReportCard {
+    year: String!
+    period: String
+    generatedAt: String
+    subjects: [ReportCardSubject!]!
+    generalJudgment: String
+}
+
+type ReportCardSubject {
+    name: String!
+    mark: Float!
+    judgment: String
+}
+
+type PCTOProgression {
+    totalHours: Int!
+    companies: [PCTOCompany!]!
+}
+
+type PCTOCompany {
+    name: String!
+    hoursCompleted: Int!
+    evaluation: String
+}
+
+type Document {
+    type: String!
+    status: String!
+    createdAt: String!
+}
+
+type Document15May {
+    status: String!
+    lastUpdated: String!
+    signatures: [Signature!]!
+}
+
+type Signature {
+    signer: String!
+    timestamp: String!
+}
+
+type PDPInfo {
+    exists: Boolean!
+    lastReview: String
+}
+
+type PCTOInfo {
+    hoursCompleted: Int!
+    status: String!
+}
+
+# --- Extensions ---
+
+extend type Student {
+    reportCards(year: String!): [ReportCard!]!
+    pctoProgression: PCTOProgression
+    orientationHours: Int!
+    documents: [Document!]!
+    pdp: PDPInfo
+    pcto: PCTOInfo
+}
+
+extend type Class {
+    document15maggio: Document15May
+}
+
+# Queries are already extended via types but if new root needed:
+# extend type Query { ... }

@@ -120,6 +120,12 @@ func (r *AcademicRepository) AssignSubjectToClass(assignment *domain.ClassSubjec
 	return r.db.Create(assignment).Error
 }
 
+func (r *AcademicRepository) GetAssignmentsByTeacherID(teacherID uint) ([]domain.ClassSubjectAssignment, error) {
+	var assignments []domain.ClassSubjectAssignment
+	err := r.db.Preload("Class").Preload("Subject").Where("teacher_id = ?", teacherID).Find(&assignments).Error
+	return assignments, err
+}
+
 // --- Mark ---
 
 func (r *AcademicRepository) CreateMark(mark *domain.Mark) error {

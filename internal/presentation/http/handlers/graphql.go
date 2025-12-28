@@ -5,13 +5,15 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-gonic/gin"
 	"github.com/k/iRegistro/internal/application/academic"
+	"github.com/k/iRegistro/internal/application/reporting"
 	"github.com/k/iRegistro/internal/presentation/graphql"
 )
 
-func GraphQLHandler(service *academic.AcademicService) gin.HandlerFunc {
+func GraphQLHandler(academicService *academic.AcademicService, reportingService *reporting.ReportingService) gin.HandlerFunc {
 	// Create Resolver with dependency
 	resolver := &graphql.Resolver{
-		AcademicService: service,
+		AcademicService:  academicService,
+		ReportingService: reportingService,
 	}
 
 	// Create Executable Schema

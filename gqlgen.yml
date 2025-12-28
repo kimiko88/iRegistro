@@ -45,3 +45,21 @@ models:
   Time:
     model:
        - github.com/99designs/gqlgen/graphql.Time
+  Student:
+    fields:
+      reportCards:
+        resolver: true
+      pctoProgression:
+        resolver: true
+      orientationHours:
+        resolver: true
+      documents:
+        resolver: true
+      pdp:
+        resolver: true
+      pcto:
+        resolver: true
+  Class:
+    fields:
+      document15maggio:
+        resolver: true

@@ -1,0 +1,30 @@
+# Binaries
+bin/
+main
+app
+
+# Go
+go.sum
+vendor/
+*.exe
+*.test
+*.prof
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+.env
+internal/config/*.yaml
+!internal/config/config.yaml.example
+postgres-data/
+coverage.out
+debug/
+tmp/
+
+# OS
+.DS_Store
+Thumbs.db

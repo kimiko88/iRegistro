@@ -27,14 +27,15 @@ type Campus struct {
 }
 
 type Class struct {
-	ID          string           `json:"id"`
-	Grade       int              `json:"grade"`
-	Section     string           `json:"section"`
-	Year        string           `json:"year"`
-	Students    []*Student       `json:"students"`
-	Subjects    []*Subject       `json:"subjects"`
-	Coordinator *Teacher         `json:"coordinator,omitempty"`
-	Statistics  *ClassStatistics `json:"statistics,omitempty"`
+	ID               string           `json:"id"`
+	Grade            int              `json:"grade"`
+	Section          string           `json:"section"`
+	Year             string           `json:"year"`
+	Students         []*Student       `json:"students"`
+	Subjects         []*Subject       `json:"subjects"`
+	Coordinator      *Teacher         `json:"coordinator,omitempty"`
+	Statistics       *ClassStatistics `json:"statistics,omitempty"`
+	Document15maggio *Document15May   `json:"document15maggio,omitempty"`
 }
 
 type ClassAssignment struct {
@@ -56,6 +57,18 @@ type Curriculum struct {
 	Classes []*Class `json:"classes"`
 }
 
+type Document struct {
+	Type      string `json:"type"`
+	Status    string `json:"status"`
+	CreatedAt string `json:"createdAt"`
+}
+
+type Document15May struct {
+	Status      string       `json:"status"`
+	LastUpdated string       `json:"lastUpdated"`
+	Signatures  []*Signature `json:"signatures"`
+}
+
 type Mark struct {
 	ID      string    `json:"id"`
 	Value   float64   `json:"value"`
@@ -64,7 +77,42 @@ type Mark struct {
 	Subject *Subject  `json:"subject"`
 }
 
+type PCTOCompany struct {
+	Name           string  `json:"name"`
+	HoursCompleted int     `json:"hoursCompleted"`
+	Evaluation     *string `json:"evaluation,omitempty"`
+}
+
+type PCTOInfo struct {
+	HoursCompleted int    `json:"hoursCompleted"`
+	Status         string `json:"status"`
+}
+
+type PCTOProgression struct {
+	TotalHours int            `json:"totalHours"`
+	Companies  []*PCTOCompany `json:"companies"`
+}
+
+type PDPInfo struct {
+	Exists     bool    `json:"exists"`
+	LastReview *string `json:"lastReview,omitempty"`
+}
+
 type Query struct {
+}
+
+type ReportCard struct {
+	Year            string               `json:"year"`
+	Period          *string              `json:"period,omitempty"`
+	GeneratedAt     *string              `json:"generatedAt,omitempty"`
+	Subjects        []*ReportCardSubject `json:"subjects"`
+	GeneralJudgment *string              `json:"generalJudgment,omitempty"`
+}
+
+type ReportCardSubject struct {
+	Name     string  `json:"name"`
+	Mark     float64 `json:"mark"`
+	Judgment *string `json:"judgment,omitempty"`
 }
 
 type School struct {
@@ -75,13 +123,24 @@ type School struct {
 	Campuses []*Campus `json:"campuses"`
 }
 
+type Signature struct {
+	Signer    string `json:"signer"`
+	Timestamp string `json:"timestamp"`
+}
+
 type Student struct {
-	ID        string     `json:"id"`
-	FirstName string     `json:"firstName"`
-	LastName  string     `json:"lastName"`
-	Classes   []*Class   `json:"classes"`
-	Marks     []*Mark    `json:"marks"`
-	Absences  []*Absence `json:"absences"`
+	ID               string           `json:"id"`
+	FirstName        string           `json:"firstName"`
+	LastName         string           `json:"lastName"`
+	Classes          []*Class         `json:"classes"`
+	Marks            []*Mark          `json:"marks"`
+	Absences         []*Absence       `json:"absences"`
+	ReportCards      []*ReportCard    `json:"reportCards"`
+	PctoProgression  *PCTOProgression `json:"pctoProgression,omitempty"`
+	OrientationHours int              `json:"orientationHours"`
+	Documents        []*Document      `json:"documents"`
+	Pdp              *PDPInfo         `json:"pdp,omitempty"`
+	Pcto             *PCTOInfo        `json:"pcto,omitempty"`
 }
 
 type Subject struct {

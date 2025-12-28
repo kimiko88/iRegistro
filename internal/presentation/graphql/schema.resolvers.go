@@ -9,9 +9,21 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
+	"github.com/k/iRegistro/internal/domain"
 	"github.com/k/iRegistro/internal/presentation/graphql/model"
 )
+
+// Document15maggio resolver
+func (r *classResolver) Document15maggio(ctx context.Context, obj *model.Class) (*model.Document15May, error) {
+	// Stub implementation
+	return &model.Document15May{
+		Status:      "DRAFT",
+		LastUpdated: time.Now().Format(time.RFC3339),
+		Signatures:  []*model.Signature{},
+	}, nil
+}
 
 // Schools is the resolver for the schools field. (Note: Real implementation would need pagination/filtering)
 // For now returning empty or erroring as we don't have GetSchools
@@ -37,13 +49,32 @@ func (r *queryResolver) School(ctx context.Context, id string) (*model.School, e
 		return nil, err
 	}
 
+	// Fetch Curriculums
+	curriculumsData, err := r.AcademicService.GetCurriculumsBySchoolID(s.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	var campuses []*model.Campus
 	for _, c := range campusesData {
+		// Filter curriculums for this campus
+		var campusCurriculums []*model.Curriculum
+		for _, cur := range curriculumsData {
+			if cur.CampusID == c.ID {
+				campusCurriculums = append(campusCurriculums, &model.Curriculum{
+					ID:   fmt.Sprintf("%d", cur.ID),
+					Name: cur.Name,
+					Code: &cur.Code,
+					// Classes would be next level deep
+				})
+			}
+		}
+
 		campuses = append(campuses, &model.Campus{
-			ID:      fmt.Sprintf("%d", c.ID),
-			Name:    c.Name,
-			Address: &c.Address,
-			// Curriculums need fetching too if we want full tree
+			ID:          fmt.Sprintf("%d", c.ID),
+			Name:        c.Name,
+			Address:     &c.Address,
+			Curriculums: campusCurriculums,
 		})
 	}
 
@@ -70,12 +101,27 @@ func (r *queryResolver) Class(ctx context.Context, id string) (*model.Class, err
 		return nil, err
 	}
 
+	// Fetch Students
+	studentsData, err := r.AcademicService.GetStudentsByClassID(c.ID, c.Year)
+	if err != nil {
+		return nil, err
+	}
+
+	var students []*model.Student
+	for _, st := range studentsData {
+		students = append(students, &model.Student{
+			ID:        fmt.Sprintf("%d", st.ID),
+			FirstName: st.FirstName,
+			LastName:  st.LastName,
+		})
+	}
+
 	return &model.Class{
-		ID:      fmt.Sprintf("%d", c.ID),
-		Grade:   c.Grade,
-		Section: c.Section,
-		Year:    c.Year,
-		// Students, Subjects, etc. would be populated here or via field resolvers
+		ID:       fmt.Sprintf("%d", c.ID),
+		Grade:    c.Grade,
+		Section:  c.Section,
+		Year:     c.Year,
+		Students: students,
 	}, nil
 }
 
@@ -99,10 +145,203 @@ func (r *queryResolver) Student(ctx context.Context, id string) (*model.Student,
 
 // Teacher is the resolver for the teacher field.
 func (r *queryResolver) Teacher(ctx context.Context, id string) (*model.Teacher, error) {
-	panic(fmt.Errorf("not implemented: Teacher - teacher"))
+	teacherID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid id")
+	}
+
+	// 1. Fetch User
+	user, err := r.AcademicService.GetTeacherByID(uint(teacherID))
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Fetch Assignments
+	assignments, err := r.AcademicService.GetAssignmentsByTeacherID(uint(teacherID))
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Map Assignments to Model && Extract Subjects
+	var modelAssignments []*model.ClassAssignment
+	// Use map to deduce unique subjects
+	seenSubjects := make(map[uint]bool)
+	var subjects []*model.Subject
+
+	for _, a := range assignments {
+		// Populate Assignments
+		// Note: We need to fetch Class details if they are not fully preloaded or if we need to map them to model.Class
+		// Our GetAssignmentsByTeacherID preloads Class and Subject. Assuming domain structs match roughly.
+		// However, domain.ClassSubjectAssignment.Class is *domain.Class.
+		// We need to map *domain.Class -> *model.Class manually or via helper.
+
+		// Map Class
+		teacherClass := &model.Class{
+			ID: fmt.Sprintf("%d", a.ClassID),
+			// We can't easily access Grade/Section if Preload didn't work deep or if fields differ.
+			// Assuming Preload worked or we fetch via ID (lazy loading safer if preload fails)
+			// Ideally we map fields from a.Class which is of type Class (requires Preload in Repo)
+		}
+
+		modelAssignments = append(modelAssignments, &model.ClassAssignment{
+			Class:        teacherClass,
+			HoursPerWeek: 0, // Not in Assignment struct? Added to Subject or Assignment?
+		})
+
+		// Extract Subject
+		if !seenSubjects[a.SubjectID] {
+			seenSubjects[a.SubjectID] = true
+			subjects = append(subjects, &model.Subject{
+				ID: fmt.Sprintf("%d", a.SubjectID),
+				// See note above on Preload
+			})
+		}
+	}
+
+	return &model.Teacher{
+		ID:               fmt.Sprintf("%d", user.ID),
+		Name:             fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+		Subjects:         subjects,
+		ClassAssignments: modelAssignments,
+	}, nil
 }
+
+// ReportCards resolver
+func (r *studentResolver) ReportCards(ctx context.Context, obj *model.Student, year string) ([]*model.ReportCard, error) {
+	studentID, err := strconv.Atoi(obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid student id")
+	}
+	docs, err := r.ReportingService.GetDocumentsByStudentID(uint(studentID))
+	if err != nil {
+		return nil, err
+	}
+
+	var cards []*model.ReportCard
+	for _, d := range docs {
+		if d.Type == domain.DocReportCard && d.AcademicYear == year {
+			createdAt := d.CreatedAt.Format(time.RFC3339)
+			cards = append(cards, &model.ReportCard{
+				Year:        d.AcademicYear,
+				GeneratedAt: &createdAt,
+				Subjects:    []*model.ReportCardSubject{}, // Populate from d.Data
+			})
+		}
+	}
+	return cards, nil
+}
+
+// PctoProgression resolver
+func (r *studentResolver) PctoProgression(ctx context.Context, obj *model.Student) (*model.PCTOProgression, error) {
+	studentID, err := strconv.Atoi(obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid student id")
+	}
+	totalHours, projects, err := r.ReportingService.GetPCTOProgression(uint(studentID))
+	if err != nil {
+		return nil, err
+	}
+
+	// Map projects to companies (Simplified: assuming 1 company per project or extracting name)
+	var companies []*model.PCTOCompany
+	for _, p := range projects {
+		// Example mapping
+		companies = append(companies, &model.PCTOCompany{
+			Name:           p.Name,
+			HoursCompleted: 0, // Need precise logic
+			Evaluation:     nil,
+		})
+	}
+
+	return &model.PCTOProgression{
+		TotalHours: totalHours,
+		Companies:  companies,
+	}, nil
+}
+
+// OrientationHours resolver
+func (r *studentResolver) OrientationHours(ctx context.Context, obj *model.Student) (int, error) {
+	studentID, err := strconv.Atoi(obj.ID)
+	if err != nil {
+		return 0, fmt.Errorf("invalid student id")
+	}
+	return r.ReportingService.GetOrientationHours(uint(studentID))
+}
+
+// Documents resolver
+func (r *studentResolver) Documents(ctx context.Context, obj *model.Student) ([]*model.Document, error) {
+	studentID, err := strconv.Atoi(obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid student id")
+	}
+	docs, err := r.ReportingService.GetDocumentsByStudentID(uint(studentID))
+	if err != nil {
+		return nil, err
+	}
+	var modelDocs []*model.Document
+	for _, d := range docs {
+		modelDocs = append(modelDocs, &model.Document{
+			Type:      string(d.Type),
+			Status:    string(d.Status),
+			CreatedAt: d.CreatedAt.Format(time.RFC3339),
+		})
+	}
+	return modelDocs, nil
+}
+
+// Pdp resolver
+func (r *studentResolver) Pdp(ctx context.Context, obj *model.Student) (*model.PDPInfo, error) {
+	studentID, err := strconv.Atoi(obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid student id")
+	}
+	docs, err := r.ReportingService.GetDocumentsByStudentID(uint(studentID))
+	if err != nil {
+		return nil, err
+	}
+	exists := false
+	var lastReview *string
+	for _, d := range docs {
+		if d.Type == domain.DocPDP {
+			exists = true
+			lr := d.CreatedAt.Format(time.RFC3339)
+			lastReview = &lr
+			break
+		}
+	}
+
+	return &model.PDPInfo{
+		Exists:     exists,
+		LastReview: lastReview,
+	}, nil
+}
+
+// Pcto resolver
+func (r *studentResolver) Pcto(ctx context.Context, obj *model.Student) (*model.PCTOInfo, error) {
+	progression, err := r.PctoProgression(ctx, obj)
+	if err != nil {
+		return nil, err
+	}
+	status := "ACTIVE"
+	if progression.TotalHours >= 200 { // Example threshold
+		status = "COMPLETED"
+	}
+
+	return &model.PCTOInfo{
+		HoursCompleted: progression.TotalHours,
+		Status:         status,
+	}, nil
+}
+
+// Class returns ClassResolver implementation.
+func (r *Resolver) Class() ClassResolver { return &classResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Student returns StudentResolver implementation.
+func (r *Resolver) Student() StudentResolver { return &studentResolver{r} }
+
+type classResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type studentResolver struct{ *Resolver }

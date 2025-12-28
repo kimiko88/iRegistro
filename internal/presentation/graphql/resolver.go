@@ -7,8 +7,10 @@ package graphql
 
 import (
 	"github.com/k/iRegistro/internal/application/academic"
+	"github.com/k/iRegistro/internal/application/reporting"
 )
 
 type Resolver struct {
-	AcademicService *academic.AcademicService
+	AcademicService  *academic.AcademicService
+	ReportingService *reporting.ReportingService
 }

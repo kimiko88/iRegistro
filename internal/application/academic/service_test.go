@@ -8,7 +8,7 @@ import (
 )
 
 func TestCalculateAverage(t *testing.T) {
-	service := NewAcademicService(nil) // Repo not needed for pure logic
+	service := NewAcademicService(nil, nil, nil) // Repo not needed for pure logic
 
 	marks := []domain.Mark{
 		{Value: 8.0},
@@ -23,7 +23,7 @@ func TestCalculateAverage(t *testing.T) {
 }
 
 func TestCalculateWeightedAverage(t *testing.T) {
-	service := NewAcademicService(nil)
+	service := NewAcademicService(nil, nil, nil)
 
 	marks := []domain.Mark{
 		{Value: 8.0, Weight: 1.0}, // e.g. Oral
@@ -37,7 +37,7 @@ func TestCalculateWeightedAverage(t *testing.T) {
 }
 
 func TestCheckAbsenceThreshold(t *testing.T) {
-	service := NewAcademicService(nil)
+	service := NewAcademicService(nil, nil, nil)
 
 	// Total 100 hours. 31 absences -> 69% attendance -> Fail
 	absences := make([]domain.Absence, 31)
