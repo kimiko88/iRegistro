@@ -149,3 +149,38 @@ func (s *SecretaryService) BatchPrint(docIDs []uint) ([]byte, error) {
 	// Real implementation would loop docs, generate PDFs, merge them.
 	return []byte("%PDF-1.4 ... (Mock Batch PDF) ..."), nil
 }
+
+type DashboardStats struct {
+	NewDocuments   int64 `json:"new_documents"`
+	ProcessedToday int64 `json:"processed_today"`
+	DeliveryIssues int64 `json:"delivery_issues"`
+}
+
+func (s *SecretaryService) GetDashboardStats(schoolID uint) (DashboardStats, error) {
+	// 1. New documents = Status DRAFT or PENDING (using DRAFT based on GetInbox)
+	newDocs, err := s.repo.CountDocumentsByStatus(schoolID, domain.DocStatusDraft)
+	if err != nil {
+		return DashboardStats{}, err
+	}
+
+	// 2. Processed Today = Status SIGNED/ARCHIVED and updated >= today 00:00
+	today := time.Now().Truncate(24 * time.Hour)
+	processed, err := s.repo.CountDocumentsUpdatedSince(
+		schoolID,
+		[]domain.DocumentStatus{domain.DocStatusSigned, domain.DocStatusArchived},
+		today,
+	)
+	if err != nil {
+		return DashboardStats{}, err
+	}
+
+	// 3. Delivery issues = Mock logic or actual query if DeliveryReport repo existed
+	// For now, returning 0 as per requirement/capabilities
+	deliveryIssues := int64(0)
+
+	return DashboardStats{
+		NewDocuments:   newDocs,
+		ProcessedToday: processed,
+		DeliveryIssues: deliveryIssues,
+	}, nil
+}

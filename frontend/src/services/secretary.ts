@@ -17,5 +17,17 @@ export default {
         // Theoretically triggers backend PDF generation for download or sends to printer
         // For frontend, likely returns a PDF blob
         return api.post('/secretary/documents/print-batch', { ids: docIds }, { responseType: 'blob' });
+    },
+    getDeliveryReports(params: any) {
+        return api.get('/secretary/delivery-reports', { params });
+    },
+    exportArchive(ids: number[]) {
+        return api.post('/secretary/archive/export', { ids }, { responseType: 'blob' });
+    },
+    markDelivered(docId: number, recipientId: number) {
+        return api.post(`/secretary/documents/${docId}/delivered`, { recipientId });
+    },
+    getDashboardStats() {
+        return api.get('/secretary/stats');
     }
 };

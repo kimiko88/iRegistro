@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/k/iRegistro/internal/application/auth"
@@ -47,19 +46,19 @@ func main() {
 	authService := auth.NewAuthService(
 		userRepo,
 		authRepo,
-		"your-secret-key", // In production use cfg.Auth.Secret
-		15*time.Minute,
-		7*24*time.Hour,
+		cfg.Auth.JWTSecret,
+		cfg.Auth.AccessDuration,
+		cfg.Auth.RefreshDuration,
 	)
 	authHandler := handlers.NewAuthHandler(authService)
 
 	// WebSocket
 	hub := ws.NewHub()
 	go hub.Run()
-	wsHandler := ws.NewHandler(hub, "your-secret-key")
+	wsHandler := ws.NewHandler(hub, cfg.Auth.JWTSecret)
 
 	// 5. Setup Router
-	r := httpPresentation.NewRouter(authHandler, wsHandler, db, hub, l)
+	r := httpPresentation.NewRouter(authHandler, wsHandler, db, hub, l, cfg.Auth.JWTSecret)
 
 	// 6. Start Server
 	if err := r.Run(":" + cfg.Server.Port); err != nil {

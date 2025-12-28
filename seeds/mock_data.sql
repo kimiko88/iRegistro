@@ -8,8 +8,8 @@ VALUES ('Liceo Classico Alessandro Manzoni', 'LCMKZ12345', 'Milano', 'segreteria
 -- Passwords are 'hashed_secret' placeholder
 INSERT INTO users (school_id, email, password_hash, role, first_name, last_name) VALUES
 ((SELECT id FROM schools LIMIT 1), 'admin@manzoni.edu.it', '$2a$10$xyz...', 'Admin', 'Mario', 'Rossi'),
-((SELECT id FROM schools LIMIT 1), 'dirigente@manzoni.edu.it', '$2a$10$xyz...', 'Dirigente', 'Giulia', 'Bianchi'),
-((SELECT id FROM schools LIMIT 1), 'segreteria@manzoni.edu.it', '$2a$10$xyz...', 'Segreteria', 'Anna', 'Verdi');
+((SELECT id FROM schools LIMIT 1), 'dirigente@manzoni.edu.it', '$2a$10$xyz...', 'Principal', 'Giulia', 'Bianchi'),
+((SELECT id FROM schools LIMIT 1), 'segreteria@manzoni.edu.it', '$2a$10$xyz...', 'Secretary', 'Anna', 'Verdi');
 
 -- Teachers (15)
 INSERT INTO users (school_id, email, password_hash, role, first_name, last_name)
@@ -17,7 +17,7 @@ SELECT
     (SELECT id FROM schools LIMIT 1), 
     'docente' || generate_series || '@manzoni.edu.it', 
     '$2a$10$xyz...', 
-    'Insegnante', 
+    'Teacher', 
     'Docente', 
     'Numero' || generate_series
 FROM generate_series(1, 15);
@@ -54,7 +54,7 @@ INSERT INTO class_subject_assignments (class_id, subject_id, teacher_id)
 SELECT 
     c.id, 
     s.id, 
-    (SELECT id FROM users WHERE role = 'Insegnante' ORDER BY RANDOM() LIMIT 1)
+    (SELECT id FROM users WHERE role = 'Teacher' ORDER BY RANDOM() LIMIT 1)
 FROM classes c
 CROSS JOIN subjects s
 WHERE s.short_name IN ('ITA', 'MAT', 'STO'); -- Assign core subjects to all classes
@@ -63,7 +63,7 @@ WHERE s.short_name IN ('ITA', 'MAT', 'STO'); -- Assign core subjects to all clas
 INSERT INTO students (school_id, first_name, last_name, tax_code, date_of_birth)
 SELECT 
     (SELECT id FROM schools LIMIT 1),
-    'Studente', 
+    'Student', 
     'Cognome' || generate_series, 
     'TAXCODE' || generate_series,
     '2008-01-01'::date + (generate_series || ' days')::interval
@@ -85,7 +85,7 @@ SELECT
     s.id,
     e.class_id,
     (SELECT id FROM subjects ORDER BY RANDOM() LIMIT 1),
-    (SELECT id FROM users WHERE role = 'Insegnante' ORDER BY RANDOM() LIMIT 1),
+    (SELECT id FROM users WHERE role = 'Teacher' ORDER BY RANDOM() LIMIT 1),
     '2024-10-01'::date + ((random() * 60)::int || ' days')::interval,
     (random() * 8 + 2)::decimal(4,2), -- Marks 2.00 to 10.00
     CASE WHEN random() > 0.5 THEN 'Written' ELSE 'Oral' END

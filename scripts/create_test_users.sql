@@ -29,7 +29,7 @@ VALUES (
     '$2a$14$xgqsXa.yBpG8CXmaKymrzO/8vFf7DHLrfGwSiPuY1l3Am1D5m3y3K',
     'Maria',
     'Rossi',
-    'Dirigente',
+    'Principal',
     1,
     NOW(),
     NOW()
@@ -43,7 +43,7 @@ VALUES (
     '$2a$14$xgqsXa.yBpG8CXmaKymrzO/8vFf7DHLrfGwSiPuY1l3Am1D5m3y3K',
     'Giovanni',
     'Bianchi',
-    'Insegnante',
+    'Teacher',
     1,
     NOW(),
     NOW()
@@ -57,7 +57,7 @@ VALUES (
     '$2a$14$xgqsXa.yBpG8CXmaKymrzO/8vFf7DHLrfGwSiPuY1l3Am1D5m3y3K',
     'Laura',
     'Verdi',
-    'Segreteria',
+    'Secretary',
     1,
     NOW(),
     NOW()
@@ -71,7 +71,7 @@ VALUES (
     '$2a$14$xgqsXa.yBpG8CXmaKymrzO/8vFf7DHLrfGwSiPuY1l3Am1D5m3y3K',
     'Paolo',
     'Neri',
-    'Genitore',
+    'Parent',
     1,
     NOW(),
     NOW()
@@ -85,7 +85,7 @@ VALUES (
     '$2a$14$xgqsXa.yBpG8CXmaKymrzO/8vFf7DHLrfGwSiPuY1l3Am1D5m3y3K',
     'Marco',
     'Blu',
-    'Studente',
+    'Student',
     1,
     NOW(),
     NOW()

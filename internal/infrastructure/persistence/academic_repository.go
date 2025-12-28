@@ -46,11 +46,8 @@ func (r *AcademicRepository) CreateCurriculum(curriculum *domain.Curriculum) err
 }
 
 func (r *AcademicRepository) GetCurriculumsBySchoolID(schoolID uint) ([]domain.Curriculum, error) {
-	// Join with Campus to filter by SchoolID
 	var curriculums []domain.Curriculum
-	err := r.db.Joins("JOIN campuses ON campuses.id = curriculums.campus_id").
-		Where("campuses.school_id = ?", schoolID).
-		Find(&curriculums).Error
+	err := r.db.Where("school_id = ?", schoolID).Find(&curriculums).Error
 	return curriculums, err
 }
 
@@ -68,11 +65,7 @@ func (r *AcademicRepository) GetClassByID(id uint) (*domain.Class, error) {
 
 func (r *AcademicRepository) GetClassesBySchoolID(schoolID uint) ([]domain.Class, error) {
 	var classes []domain.Class
-	// Complex join: Class -> Curriculum -> Campus -> School
-	err := r.db.Joins("JOIN curriculums ON curriculums.id = classes.curriculum_id").
-		Joins("JOIN campuses ON campuses.id = curriculums.campus_id").
-		Where("campuses.school_id = ?", schoolID).
-		Find(&classes).Error
+	err := r.db.Where("school_id = ?", schoolID).Find(&classes).Error
 	return classes, err
 }
 

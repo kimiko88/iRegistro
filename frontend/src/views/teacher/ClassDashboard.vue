@@ -1,55 +1,75 @@
 <template>
-  <div class="h-full flex flex-col">
+  <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
     <!-- Header with Class Selector -->
-    <div class="navbar bg-base-100 shadow-sm min-h-16 px-4 z-10">
-      <div class="flex-1 gap-4 items-center">
-        <h2 class="text-xl font-bold text-primary">Le Mie Classi</h2>
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 shadow-sm">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="flex items-center gap-4">
+          <div class="flex flex-col">
+              <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                  <GraduationCap class="w-7 h-7 text-indigo-600 dark:text-indigo-400"/>
+                  Class Dashboard
+              </h1>
+              <span class="text-sm text-gray-500 dark:text-gray-400 mt-1" v-if="store.currentClass">
+                  {{ store.currentClass.name }} - {{ store.currentClass.subjectName }}
+              </span>
+          </div>
+        </div>
         
-        <select 
-          class="select select-bordered select-sm w-full max-w-xs"
-          :value="store.selectedClassId"
-          @change="changeClass($event)"
-          :disabled="store.classes.length === 0"
-        >
-          <option disabled value="">Seleziona una classe</option>
-          <option v-for="cls in store.classes" :key="cls.id" :value="cls.id">
-            Classe {{ cls.name }} - {{ cls.subject }}
-          </option>
-        </select>
-
-        <div v-if="store.currentClass" class="badge badge-outline">
-          {{ store.students.length }} Studenti
+        <!-- Class Selector & Student Count -->
+        <div class="flex items-center gap-3">
+          <select 
+            class="select select-bordered select-sm w-full md:w-64 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+            :value="store.selectedClassId"
+            @change="changeClass($event)"
+            :disabled="store.classes.length === 0"
+          >
+            <option disabled value="">Select Class</option>
+            <option v-for="cls in store.classes" :key="cls.id" :value="cls.id">
+              {{ cls.name }} ({{ cls.subjectName }})
+            </option>
+          </select>
+          
+          <div v-if="store.currentClass" class="badge badge-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700 gap-2 px-4">
+              <Users class="w-4 h-4"/>
+              {{ store.students.length }} Students
+          </div>
         </div>
       </div>
-
-      <div class="flex-none">
-        <ul class="menu menu-horizontal px-1 gap-1">
-          <li><a :class="{ active: activeTab === 'marks' }" @click="activeTab = 'marks'">Voti</a></li>
-          <li><a :class="{ active: activeTab === 'absences' }" @click="activeTab = 'absences'">Assenze</a></li>
-          <li><a :class="{ active: activeTab === 'schedule' }" @click="activeTab = 'schedule'">Orario</a></li>
-          <li><a :class="{ active: activeTab === 'colloquiums' }" @click="activeTab = 'colloquiums'">Colloqui</a></li>
-          <li><a :class="{ active: activeTab === 'documents' }" @click="activeTab = 'documents'">Documenti</a></li>
-        </ul>
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 overflow-x-auto">
+      <div role="tablist" class="tabs tabs-bordered py-2">
+        <a 
+          v-for="tab in tabs" 
+          :key="tab.id"
+          role="tab" 
+          class="tab gap-2 transition-all duration-200 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" 
+          :class="{ 'tab-active !text-indigo-600 dark:!text-indigo-400 !border-indigo-600 dark:!border-indigo-400 font-semibold': activeTab === tab.id }"
+          @click="activeTab = tab.id"
+        >
+            <component :is="tab.icon" class="w-4 h-4" />
+            {{ tab.label }}
+        </a>
       </div>
     </div>
 
     <!-- Main Content Area -->
-    <div class="flex-1 overflow-hidden relative bg-base-200/50 p-4">
-      <Transition name="fade" mode="out-in">
-        
-        <!-- Tab: Marks -->
+    <div class="flex-1 overflow-hidden relative">
+      <div v-if="!store.selectedClassId" class="flex flex-col items-center justify-center h-full">
+          <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 max-w-md">
+              <School class="w-20 h-20 mx-auto mb-4 text-gray-300 dark:text-gray-600"/>
+              <p class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">No Class Selected</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Please select a class from the dropdown above to begin</p>
+          </div>
+      </div>
+
+      <Transition name="fade" mode="out-in" v-else>
         <component 
           :is="currentTabComponent" 
-          v-if="store.selectedClassId"
+          class="h-full w-full p-6 overflow-y-auto bg-gray-50 dark:bg-gray-900"
           :class-id="store.selectedClassId"
         />
-        
-        <!-- Empty State -->
-        <div v-else class="flex flex-col items-center justify-center h-full text-base-content/50">
-          <div class="i-heroicons-academic-cap text-6xl mb-4" />
-          <h3 class="text-lg font-medium">Seleziona una classe per iniziare</h3>
-        </div>
-
       </Transition>
     </div>
   </div>
@@ -58,23 +78,53 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useTeacherStore } from '@/stores/teacher';
-import MarksTab from '@/components/teacher/MarksTab.vue';
-import AbsencesTab from '@/components/teacher/AbsencesTab.vue';
-// Placeholder setup for other tabs
-import ScheduleTab from '@/components/teacher/ScheduleTab.vue';
-import DocumentsTab from '@/components/teacher/DocumentsTab.vue';
+import MarksTab from './MarksTab.vue';
+import AbsencesTab from './AbsencesTab.vue';
+import ScheduleTab from './ScheduleTab.vue';
+import MessagesTab from './MessagesTab.vue';
+import ColloquiumTab from './ColloquiumTab.vue';
+import DocumentsTab from './DocumentsTab.vue';
+import CoordinatorTab from './CoordinatorTab.vue';
+import { 
+  GraduationCap, 
+  Users, 
+  School,
+  FileBarChart,
+  CalendarX,
+  Calendar,
+  MessageSquare,
+  FileText,
+  UserCog
+} from 'lucide-vue-next';
 
 const store = useTeacherStore();
 const activeTab = ref('marks');
+
+const tabs = computed(() => {
+    const list = [
+        { id: 'marks', label: 'Marks', icon: FileBarChart },
+        { id: 'absences', label: 'Absences', icon: CalendarX },
+        { id: 'schedule', label: 'Schedule', icon: Calendar },
+        { id: 'messages', label: 'Messages', icon: MessageSquare },
+        { id: 'colloquiums', label: 'Colloquiums', icon: Users },
+        { id: 'documents', label: 'Documents', icon: FileText },
+    ];
+    if (store.isCoordinator) {
+        list.push({ id: 'coordinator', label: 'Coordinator', icon: UserCog });
+    }
+    return list;
+});
 
 const currentTabComponent = computed(() => {
   switch (activeTab.value) {
     case 'marks': return MarksTab;
     case 'absences': return AbsencesTab;
     case 'schedule': return ScheduleTab;
-    case 'colloquiums': return ColloquiumView;
+    case 'messages': return MessagesTab;
+    case 'colloquiums': return ColloquiumTab;
     case 'documents': return DocumentsTab;
-    default: return MarksTab;
+    case 'coordinator': return CoordinatorTab;
+    default: return { template: `<div class="p-10 text-center capitalize">${activeTab.value} Tab Coming Soon</div>` };
   }
 });
 
@@ -93,7 +143,7 @@ const changeClass = (event: Event) => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease;
 }
 
 .fade-enter-from,

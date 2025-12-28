@@ -23,11 +23,11 @@ CREATE INDEX idx_schools_code ON schools(code);
 CREATE TYPE user_role AS ENUM (
     'SuperAdmin', 
     'Admin', 
-    'Dirigente', 
-    'Insegnante', 
-    'Genitore', 
-    'Studente', 
-    'Segreteria'
+    'Principal', 
+    'Teacher', 
+    'Parent', 
+    'Student', 
+    'Secretary'
 );
 
 -- 3. Users Table

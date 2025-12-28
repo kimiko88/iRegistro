@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/google/uuid"
 	"github.com/k/iRegistro/internal/application/auth"
 	"github.com/k/iRegistro/internal/domain"
 	"github.com/stretchr/testify/assert"
@@ -90,7 +89,6 @@ func TestCIEAuthenticationFlow(t *testing.T) {
 	defer mockProvider.Close()
 
 	mockUserRepo := NewMockUserRepository()
-	mockTokenService := &auth.TokenService{} // Would need proper init
 
 	// Create OAuth2 config
 	oauth2Config := &oauth2.Config{
@@ -117,8 +115,6 @@ func TestCIEAuthenticationFlow(t *testing.T) {
 		}
 
 		// Test user creation
-		schoolID := uuid.New()
-
 		// Since we can't fully mock OIDC verifier, we test the logic separately
 		// In a real integration test, you'd use the full flow
 

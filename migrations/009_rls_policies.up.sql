@@ -45,14 +45,14 @@ CREATE POLICY "Users can see own profile" ON users FOR SELECT USING (id = curren
 -- Staff can see users in their school
 CREATE POLICY "Staff can see users in school" ON users FOR SELECT USING (
     school_id = current_school_id() 
-    AND current_user_role() IN ('Admin', 'Dirigente', 'Segreteria', 'Insegnante')
+    AND current_user_role() IN ('Admin', 'Principal', 'Secretary', 'Teacher')
 );
 
 -- 3. Students
 -- Teacher sees students in their school (simplification, real: in their classes)
 CREATE POLICY "Teachers see school students" ON students FOR SELECT USING (
     school_id = current_school_id()
-    AND current_user_role() IN ('Admin', 'Dirigente', 'Segreteria', 'Insegnante')
+    AND current_user_role() IN ('Admin', 'Principal', 'Secretary', 'Teacher')
 );
 -- Parents see their children
 CREATE POLICY "Parents see own children" ON students FOR SELECT USING (
@@ -66,7 +66,7 @@ CREATE POLICY "Students see themselves" ON students FOR SELECT USING (id = (SELE
 -- Teachers can insert/update marks for their school (or specific classes - tough in SQL without complex joins)
 CREATE POLICY "Teachers manage marks" ON marks FOR ALL USING (
     school_id = current_school_id() 
-    AND current_user_role() = 'Insegnante'
+    AND current_user_role() = 'Teacher'
     -- Ideally check if teacher teaches subject/class
 );
 
@@ -84,7 +84,7 @@ CREATE POLICY "View own/children marks" ON marks FOR SELECT USING (
 -- Director/Secretary manage documents
 CREATE POLICY "Admin manages documents" ON documents FOR ALL USING (
     school_id = current_school_id()
-    AND current_user_role() IN ('Admin', 'Dirigente', 'Segreteria')
+    AND current_user_role() IN ('Admin', 'Principal', 'Secretary')
 );
 
 -- Viewable by owner student/parent

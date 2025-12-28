@@ -2,6 +2,7 @@ package reporting
 
 import (
 	"testing"
+	"time"
 
 	"github.com/k/iRegistro/internal/domain"
 	"github.com/stretchr/testify/assert"
@@ -69,6 +70,12 @@ func (m *MockRepo) RegisterOrientationParticipation(participation *domain.Orient
 }
 func (m *MockRepo) GetOrientationParticipationsByStudentID(studentID uint) ([]domain.OrientationParticipation, error) {
 	return nil, nil
+}
+func (m *MockRepo) CountDocumentsByStatus(schoolID uint, status domain.DocumentStatus) (int64, error) {
+	return 0, nil
+}
+func (m *MockRepo) CountDocumentsUpdatedSince(schoolID uint, status []domain.DocumentStatus, since time.Time) (int64, error) {
+	return 0, nil
 }
 
 type MockPDFGen struct {

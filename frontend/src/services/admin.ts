@@ -1,31 +1,83 @@
-import api from './api';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+
+const api = axios.create({
+    baseURL: API_URL,
+    withCredentials: true,
+});
+
+// Types can be moved to a shared types file later
+export interface School {
+    id: string;
+    name: string;
+    region: string;
+    address: string;
+    city: string;
+    code: string;
+}
+
+export interface KPIStats {
+    schoolsCount: number;
+    usersCount: number;
+    storageUsed: number;
+    activeUsersLast30Days: number;
+}
 
 export default {
-    // Super Admin
-    createSchool(data: any) {
-        return api.post('/superadmin/schools', data);
+    // KPIs & Dashboard
+    getKPIs() {
+        return api.get<KPIStats>('/admin/kpis');
     },
-    getSchools() {
-        return api.get('/superadmin/schools'); // Assuming endpoint exists
+    getSchoolDistribution() {
+        return api.get('/admin/schools/distribution');
     },
 
-    // School Admin
+    // User Management
     getUsers(params: any) {
         return api.get('/admin/users', { params });
     },
-    createUser(data: any) {
-        return api.post('/admin/users', data);
+    createUser(userData: any) {
+        return api.post('/admin/users', userData);
     },
+    updateUser(id: string, userData: any) {
+        return api.put(`/admin/users/${id}`, userData);
+    },
+    deleteUser(id: string) {
+        return api.delete(`/admin/users/${id}`);
+    },
+    importUsers(formData: FormData) {
+        return api.post('/admin/users/import', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    },
+
+    // School Management
+    getSchools(params: any) {
+        return api.get('/admin/schools', { params });
+    },
+    createSchool(schoolData: any) {
+        return api.post('/admin/schools', schoolData);
+    },
+    updateSchool(id: string, schoolData: any) {
+        return api.put(`/admin/schools/${id}`, schoolData);
+    },
+
+    // Audits & Backups
     getAuditLogs(params: any) {
         return api.get('/admin/audit-logs', { params });
     },
-    getSettings() {
-        return api.get('/admin/settings');
+    getBackups() {
+        return api.get('/admin/backups');
     },
-    updateSetting(key: string, value: any) {
-        return api.put('/admin/settings', { key, value });
+    createBackup() {
+        return api.post('/admin/backups');
     },
-    requestExport(type: string) {
-        return api.post('/admin/data-export', { type });
+
+    // Export
+    exportData(request: any) {
+        return api.post('/admin/export', request, { responseType: 'blob' });
     }
 };

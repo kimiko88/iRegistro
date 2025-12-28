@@ -104,21 +104,27 @@ type Campus struct {
 }
 
 type Curriculum struct {
-	ID        uint   `gorm:"primaryKey" json:"id"`
-	CampusID  uint   `gorm:"index;not null" json:"campus_id"`
-	Name      string `gorm:"size:255;not null" json:"name"` // e.g. "Liceo Scientifico"
-	Code      string `gorm:"size:50" json:"code"`
-	CreatedAt time.Time
+	ID          uint   `gorm:"primaryKey" json:"id"`
+	SchoolID    uint   `gorm:"index;not null" json:"school_id"`
+	CampusID    *uint  `gorm:"index" json:"campus_id"`
+	Name        string `gorm:"size:255;not null" json:"name"` // e.g. "Liceo Scientifico"
+	Code        string `gorm:"size:50" json:"code"`
+	Description string `json:"description"`
+	CreatedAt   time.Time
 }
 
 type Class struct {
-	ID           uint   `gorm:"primaryKey" json:"id"`
-	CurriculumID uint   `gorm:"index;not null" json:"curriculum_id"`
-	Grade        int    `json:"grade"`                  // 1, 2, 3, 4, 5
-	Section      string `gorm:"size:10" json:"section"` // A, B, C
-	Year         string `gorm:"size:20" json:"year"`    // 2024-25
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID            uint   `gorm:"primaryKey" json:"id"`
+	SchoolID      uint   `gorm:"index;not null" json:"school_id"`
+	CampusID      *uint  `gorm:"index" json:"campus_id"`
+	CurriculumID  uint   `gorm:"index;not null" json:"curriculum_id"`
+	Grade         int    `gorm:"column:year" json:"grade"`         // 1, 2, 3, 4, 5 (DB column 'year')
+	Section       string `gorm:"size:10" json:"section"`           // A, B, C
+	Year          string `gorm:"column:academic_year" json:"year"` // 2024-25 (DB column 'academic_year')
+	Room          string `json:"room"`
+	CoordinatorID *uint  `json:"coordinator_id"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type ClassGroup struct {

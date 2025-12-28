@@ -7,6 +7,9 @@ export const useStudentStore = defineStore('student', {
         overview: null as any | null,
         marks: [] as any[],
         absences: [] as any[],
+        colloquiums: [] as any[],
+        documents: [] as any[],
+        messages: [] as any[],
     }),
 
     actions: {
@@ -22,14 +25,37 @@ export const useStudentStore = defineStore('student', {
                 ui.setLoading(false);
             }
         },
-        async fetchMarks() {
-            const ui = useUIStore();
+        async fetchMarks(params?: any) {
             try {
-                const res = await studentApi.getMarks();
+                const res = await studentApi.getMarks(params);
                 this.marks = res.data;
             } catch (e) {
                 console.error("Failed to fetch marks");
             }
+        },
+        async fetchAbsences(params?: any) {
+            try {
+                const res = await studentApi.getAbsences(params);
+                this.absences = res.data;
+            } catch (e) { console.error(e); }
+        },
+        async fetchColloquiums() {
+            try {
+                const res = await studentApi.getColloquiums();
+                this.colloquiums = res.data;
+            } catch (e) { console.error(e); }
+        },
+        async fetchDocuments() {
+            try {
+                const res = await studentApi.getDocuments();
+                this.documents = res.data;
+            } catch (e) { console.error(e); }
+        },
+        async fetchMessages(params?: any) {
+            try {
+                const res = await studentApi.getMessages(params);
+                this.messages = res.data;
+            } catch (e) { console.error(e); }
         }
     },
 });

@@ -2,6 +2,7 @@ package secretary
 
 import (
 	"testing"
+	"time"
 
 	"github.com/k/iRegistro/internal/domain"
 	"github.com/stretchr/testify/assert"
@@ -78,6 +79,15 @@ func (m *MockRepo) RegisterOrientationParticipation(participation *domain.Orient
 }
 func (m *MockRepo) GetOrientationParticipationsByStudentID(studentID uint) ([]domain.OrientationParticipation, error) {
 	return nil, nil
+}
+func (m *MockRepo) CountDocumentsByStatus(schoolID uint, status domain.DocumentStatus) (int64, error) {
+	args := m.Called(schoolID, status)
+	return int64(args.Int(0)), args.Error(1)
+}
+func (m *MockRepo) CountDocumentsUpdatedSince(schoolID uint, status []domain.DocumentStatus, since time.Time) (int64, error) {
+	// Simple stub call if used, or just return mock values
+	args := m.Called(schoolID, status, since)
+	return int64(args.Int(0)), args.Error(1)
 }
 
 type MockPDFGen struct {

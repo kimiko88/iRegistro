@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type ReportingRepository interface {
 	// Documents
 	CreateDocument(doc *Document) error
@@ -27,6 +29,10 @@ type ReportingRepository interface {
 	GetOrientationActivitiesBySchoolID(schoolID uint) ([]OrientationActivity, error)
 	RegisterOrientationParticipation(participation *OrientationParticipation) error
 	GetOrientationParticipationsByStudentID(studentID uint) ([]OrientationParticipation, error)
+
+	// Stats
+	CountDocumentsByStatus(schoolID uint, status DocumentStatus) (int64, error)
+	CountDocumentsUpdatedSince(schoolID uint, status []DocumentStatus, since time.Time) (int64, error)
 }
 
 type PDFGenerator interface {

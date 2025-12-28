@@ -38,7 +38,7 @@ SELECT
     SUM(csa.hours_per_week) AS total_hours
 FROM users u
 JOIN class_subject_assignments csa ON u.id = csa.teacher_id
-WHERE u.role = 'Insegnante'
+WHERE u.role = 'Teacher'
 GROUP BY u.id, u.first_name, u.last_name;
 
 -- 4. Colloquium Availability View

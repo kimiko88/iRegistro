@@ -1,6 +1,8 @@
 package persistence
 
 import (
+	"time"
+
 	"github.com/k/iRegistro/internal/domain"
 	"gorm.io/gorm"
 )
@@ -129,4 +131,22 @@ func (r *ReportingRepository) GetOrientationParticipationsByStudentID(studentID 
 	var parts []domain.OrientationParticipation
 	err := r.db.Where("student_id = ?", studentID).Find(&parts).Error
 	return parts, err
+}
+
+// --- Stats ---
+
+func (r *ReportingRepository) CountDocumentsByStatus(schoolID uint, status domain.DocumentStatus) (int64, error) {
+	var count int64
+	err := r.db.Model(&domain.Document{}).Where("school_id = ? AND status = ?", schoolID, status).Count(&count).Error
+	return count, err
+}
+
+func (r *ReportingRepository) CountDocumentsUpdatedSince(schoolID uint, status []domain.DocumentStatus, since time.Time) (int64, error) {
+	var count int64
+	err := r.db.Model(&domain.Document{}).
+		Where("school_id = ?", schoolID).
+		Where("status IN ?", status).
+		Where("updated_at >= ?", since).
+		Count(&count).Error
+	return count, err
 }

@@ -4,26 +4,28 @@ export default {
     getClasses() {
         return api.get('/teacher/classes');
     },
-    getClassDetails(classId: number) {
-        return api.get(`/teacher/classes/${classId}`);
-    },
     getStudents(classId: number) {
         return api.get(`/teacher/classes/${classId}/students`);
     },
     getMarks(classId: number, subjectId: number) {
         return api.get(`/teacher/classes/${classId}/subjects/${subjectId}/marks`);
     },
-    saveMark(data: any) {
-        return api.post('/teacher/marks', data);
+    saveMark(mark: any) {
+        return api.post('/teacher/marks', mark);
     },
-    getAbsences(classId: number, date: string) {
-        return api.get(`/teacher/classes/${classId}/absences`, { params: { date } });
+    getAbsences(classId: number) {
+        return api.get(`/teacher/classes/${classId}/absences`);
     },
-    saveAbsences(classId: number, absences: any[]) {
-        return api.post(`/teacher/classes/${classId}/absences`, { absences });
+    saveAbsence(absence: any) {
+        return api.post(`/teacher/classes/${absence.class_id}/absences`, absence);
     },
-    getSchedule() {
-        return api.get('/teacher/schedule');
+    // Future expansion stubs
+    getSchedule(classId: number) {
+        // return api.get(`/teacher/classes/${classId}/schedule`);
+        return Promise.resolve({ data: [] });
     },
-    // Colloqui e Messaggi would likely reuse Communication Service endpoints or have wrappers here
+    getSlots() {
+        // return api.get('/communication/slots/available');
+        return Promise.resolve({ data: [] });
+    }
 };

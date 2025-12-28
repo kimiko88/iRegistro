@@ -22,7 +22,11 @@ import SchoolReports from '@/views/director/SchoolReports.vue';
 
 import TeacherDashboard from '@/views/teacher/ClassDashboard.vue';
 
-const SchoolSettings = { template: '<div>Settings</div>' }; // Stub if missing
+import AdminPanel from '@/views/admin/AdminPanel.vue';
+import SchoolSettings from '@/views/admin/SchoolSettings.vue';
+import BackupManagement from '@/views/admin/BackupManagement.vue';
+import DataExport from '@/views/admin/DataExport.vue';
+import AuditLogs from '@/views/admin/AuditLogs.vue';
 // ClassDashboard stub removed
 
 // For simplicity, defining explicit routes for parent sub-views inside parent children
@@ -52,27 +56,47 @@ const routes: Array<RouteRecordRaw> = [
                 meta: { requiresRole: 'SuperAdmin' }
             },
             {
-                path: 'admin/users',
-                name: 'UserManagement',
-                component: UserManagement,
-                meta: { requiresRole: 'Admin' }
-            },
-            {
-                path: 'admin/settings',
-                name: 'SchoolSettings',
-                component: SchoolSettings,
-                meta: { requiresRole: 'Admin' }
+                path: 'admin',
+                component: AdminPanel,
+                meta: { requiresRole: 'Admin' },
+                children: [
+                    {
+                        path: 'users',
+                        name: 'UserManagement',
+                        component: UserManagement
+                    },
+                    {
+                        path: 'settings',
+                        name: 'SchoolSettings',
+                        component: SchoolSettings
+                    },
+                    {
+                        path: 'backups',
+                        name: 'BackupManagement',
+                        component: BackupManagement
+                    },
+                    {
+                        path: 'export',
+                        name: 'DataExport',
+                        component: DataExport
+                    },
+                    {
+                        path: 'audit-logs',
+                        name: 'AuditLogs',
+                        component: AuditLogs
+                    }
+                ]
             },
             {
                 path: 'teacher',
                 name: 'TeacherDashboard',
                 component: TeacherDashboard,
-                meta: { requiresRole: 'Insegnante' }
+                meta: { requiresRole: 'Teacher' }
             },
             {
                 path: 'parent',
                 component: ParentDashboard,
-                meta: { requiresRole: 'Genitore' },
+                meta: { requiresRole: 'Parent' },
                 children: [
                     { path: '', name: 'ParentDashboard', component: { template: '' } }, // Default view logic handling
                     { path: 'marks', component: MarksView },
@@ -85,7 +109,7 @@ const routes: Array<RouteRecordRaw> = [
             {
                 path: 'student',
                 component: StudentDashboard,
-                meta: { requiresRole: 'Studente' },
+                meta: { requiresRole: 'Student' },
                 children: [
                     { path: '', name: 'StudentDashboard', component: { template: '' } },
                     { path: 'marks', component: MarksView },
@@ -97,19 +121,19 @@ const routes: Array<RouteRecordRaw> = [
                 path: 'secretary',
                 name: 'SecretaryInbox',
                 component: DocumentManagement,
-                meta: { requiresRole: 'Segreteria' }
+                meta: { requiresRole: 'Secretary' }
             },
             {
                 path: 'secretary',
                 name: 'SecretaryInbox',
                 component: DocumentManagement,
-                meta: { requiresRole: 'Segreteria' }
+                meta: { requiresRole: 'Secretary' }
             },
             {
                 path: 'secretary/classes',
                 name: 'SecretaryClassManagement',
                 component: () => import('@/views/secretary/ClassManagement.vue'),
-                meta: { requiresRole: 'Segreteria' }
+                meta: { requiresRole: 'Secretary' }
             },
             {
                 path: 'secretary/archive',
@@ -121,19 +145,19 @@ const routes: Array<RouteRecordRaw> = [
                 path: 'director',
                 name: 'DirectorDashboard',
                 component: DirectorDashboard,
-                meta: { requiresRole: 'Dirigente' }
+                meta: { requiresRole: 'Principal' }
             },
             {
                 path: 'director/signing',
                 name: 'DocumentSigning',
                 component: DocumentSigning,
-                meta: { requiresRole: 'Dirigente' }
+                meta: { requiresRole: 'Principal' }
             },
             {
                 path: 'director/approvals',
                 name: 'RequestApprovals',
                 component: RequestApprovals,
-                meta: { requiresRole: 'Dirigente' }
+                meta: { requiresRole: 'Principal' }
             },
             {
                 path: 'director/reports',

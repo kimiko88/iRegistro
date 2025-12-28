@@ -1,70 +1,84 @@
 import { defineStore } from 'pinia';
-import adminApi from '@/services/admin';
-import { useUIStore } from './ui';
+import { ref } from 'vue';
+import adminService, { KPIStats } from '../services/admin';
+import { useNotificationStore } from './notification';
 
-export const useAdminStore = defineStore('admin', {
-    state: () => ({
-        schools: [] as any[],
-        users: [] as any[],
-        auditLogs: [] as any[],
-        settings: {} as any,
-    }),
+export const useAdminStore = defineStore('admin', () => {
+    const kpis = ref<KPIStats | null>(null);
+    const users = ref<any[]>([]);
+    const schools = ref<any[]>([]);
+    const auditLogs = ref<any[]>([]);
+    const loading = ref(false);
+    const error = ref<string | null>(null);
+    const totalUsers = ref(0);
+    const totalSchools = ref(0);
 
-    actions: {
-        async fetchSchools() {
-            const ui = useUIStore();
-            ui.setLoading(true);
-            try {
-                // const res = await adminApi.getSchools();
-                // this.schools = res.data;
+    const notificationStore = useNotificationStore();
 
-                // Mock
-                this.schools = [
-                    { id: 1, name: 'Liceo Scientifico', type: 'High School', users: 120, storage: '45GB' },
-                    { id: 2, name: 'Istituto Tecnico', type: 'Technical', users: 85, storage: '12GB' }
-                ];
-            } finally {
-                ui.setLoading(false);
-            }
-        },
-        async fetchUsers(params = {}) {
-            const ui = useUIStore();
-            ui.setLoading(true);
-            try {
-                const res = await adminApi.getUsers(params);
-                this.users = res.data.map((u: any) => ({
-                    id: u.id,
-                    name: `${u.first_name} ${u.last_name}`,
-                    email: u.email,
-                    role: u.role,
-                    status: u.locked_until ? 'Locked' : 'Active'
-                }));
-            } catch (error) {
-                console.error('Failed to fetch users:', error);
-                ui.addNotification({ type: 'error', message: 'Failed to load users' });
-            } finally {
-                ui.setLoading(false);
-            }
-        },
-        async createSchool(data: any) {
-            await adminApi.createSchool(data);
-            await this.fetchSchools();
-        },
-        async fetchAuditLogs() {
-            const ui = useUIStore();
-            ui.setLoading(true);
-            try {
-                const res = await adminApi.getAuditLogs({});
-                this.auditLogs = res.data.logs || [];
-            } catch (e) {
-                // Mock
-                this.auditLogs = [
-                    { id: 1, action: 'LOGIN', user_id: 1, timestamp: new Date().toISOString() }
-                ];
-            } finally {
-                ui.setLoading(false);
-            }
+    const fetchKPIs = async () => {
+        try {
+            loading.value = true;
+            const response = await adminService.getKPIs();
+            kpis.value = response.data;
+        } catch (err) {
+            error.value = 'Failed to fetch KPIs';
+            notificationStore.error('Failed to fetch KPIs');
+        } finally {
+            loading.value = false;
         }
-        // More actions...
-    },
+    };
+
+    const fetchUsers = async (params: any = {}) => {
+        try {
+            loading.value = true;
+            const response = await adminService.getUsers(params);
+            users.value = response.data.data || response.data; // Handle pagination or list
+            totalUsers.value = response.data.total || users.value.length;
+        } catch (err) {
+            notificationStore.error('Failed to fetch users');
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const fetchSchools = async (params: any = {}) => {
+        try {
+            loading.value = true;
+            const response = await adminService.getSchools(params);
+            schools.value = response.data.data || response.data;
+            totalSchools.value = response.data.total || schools.value.length;
+        } catch (err) {
+            // notificationStore.error('Failed to fetch schools');
+            // Silencing for now as backend might not have this endpoint fully ready or mock
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const loadAuditLogs = async (params: any = {}) => {
+        try {
+            loading.value = true;
+            const response = await adminService.getAuditLogs(params);
+            auditLogs.value = response.data.data || response.data;
+        } catch (err) {
+            notificationStore.error('Failed to load audit logs');
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    return {
+        kpis,
+        users,
+        schools,
+        auditLogs,
+        loading,
+        error,
+        totalUsers,
+        totalSchools,
+        fetchKPIs,
+        fetchUsers,
+        fetchSchools,
+        loadAuditLogs
+    };
 });

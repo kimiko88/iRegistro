@@ -188,11 +188,12 @@ func TestGetClasses(t *testing.T) {
 		{
 			ClassID:   1,
 			SubjectID: 1,
-			Class: domain.Class{
-				ID:   1,
-				Name: "1A",
+			Class: &domain.Class{
+				ID:      1,
+				Grade:   1,
+				Section: "A",
 			},
-			Subject: domain.Subject{
+			Subject: &domain.Subject{
 				ID:   1,
 				Name: "Math",
 			},
@@ -218,7 +219,7 @@ func TestGetClasses(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Len(t, response, 1)
-	assert.Equal(t, "1A", response[0].Class.Name)
+	assert.Equal(t, "A", response[0].Class.Section)
 
 	mockAcadRepo.AssertExpectations(t)
 }
@@ -230,7 +231,7 @@ func TestGetStudents(t *testing.T) {
 	mockUserRepo := new(MockUserRepoForTeacher)
 
 	students := []domain.Student{
-		{User: domain.User{ID: 10, FirstName: "Mario", LastName: "Rossi"}},
+		{ID: 10, FirstName: "Mario", LastName: "Rossi"},
 	}
 
 	// Update MockRepoForTeacher to support GetStudentsByClassID with m.Called if not already

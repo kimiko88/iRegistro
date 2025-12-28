@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -12,6 +13,13 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	Log      LogConfig
+	Auth     AuthConfig
+}
+
+type AuthConfig struct {
+	JWTSecret       string        `mapstructure:"jwt_secret"`
+	AccessDuration  time.Duration `mapstructure:"access_duration"`
+	RefreshDuration time.Duration `mapstructure:"refresh_duration"`
 }
 
 type ServerConfig struct {
@@ -45,6 +53,9 @@ func Load() (*Config, error) {
 	viper.SetDefault("server.port", "8080")
 	viper.SetDefault("server.mode", "debug")
 	viper.SetDefault("log.level", "info")
+	viper.SetDefault("auth.jwt_secret", "your-secret-key")
+	viper.SetDefault("auth.access_duration", "15m")
+	viper.SetDefault("auth.refresh_duration", "168h") // 7 days
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
@@ -80,6 +91,16 @@ func Load() (*Config, error) {
 		query := parsed.Query()
 		if sslmode := query.Get("sslmode"); sslmode != "" {
 			cfg.Database.SSLMode = sslmode
+		}
+	}
+
+	// Explicitly map JWT_SECRET if present in env (priority over structured)
+	if jwtSecret := viper.GetString("JWT_SECRET"); jwtSecret != "" {
+		cfg.Auth.JWTSecret = jwtSecret
+	}
+	if jwtExpiry := viper.GetString("JWT_EXPIRY"); jwtExpiry != "" {
+		if d, err := time.ParseDuration(jwtExpiry); err == nil {
+			cfg.Auth.AccessDuration = d
 		}
 	}
 

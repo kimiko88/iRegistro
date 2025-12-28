@@ -11,11 +11,11 @@ type Role string
 const (
 	RoleSuperAdmin Role = "SuperAdmin"
 	RoleAdmin      Role = "Admin"
-	RolePrincipal  Role = "Dirigente"
-	RoleTeacher    Role = "Insegnante"
-	RoleParent     Role = "Genitore"
-	RoleStudent    Role = "Studente"
-	RoleSecretary  Role = "Segreteria"
+	RolePrincipal  Role = "Principal"
+	RoleTeacher    Role = "Teacher"
+	RoleParent     Role = "Parent"
+	RoleStudent    Role = "Student"
+	RoleSecretary  Role = "Secretary"
 )
 
 type User struct {

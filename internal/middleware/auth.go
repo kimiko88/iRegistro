@@ -33,7 +33,8 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			fmt.Printf("AuthMiddleware: Invalid token: %v\n", err)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token", "details": fmt.Sprintf("%v", err)})
 			return
 		}
 
@@ -74,6 +75,7 @@ func RBACMiddleware(requiredRoles ...domain.Role) gin.HandlerFunc {
 			}
 		}
 
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+		fmt.Printf("RBACMiddleware: Insufficient permissions for role %v. Required one of: %v\n", userRole, requiredRoles)
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions", "your_role": userRole, "required_roles": requiredRoles})
 	}
 }

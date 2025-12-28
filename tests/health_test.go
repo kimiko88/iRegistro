@@ -18,7 +18,7 @@ func TestHealthCheck(t *testing.T) {
 	// Use the actual router implementation
 	// For health check test, we don't need a real auth service
 	authHandler := handlers.NewAuthHandler(nil)
-	r := httpPresentation.NewRouter(authHandler, nil, nil, nil, zap.NewNop())
+	r := httpPresentation.NewRouter(authHandler, nil, nil, nil, zap.NewNop(), "test-secret")
 
 	// Perform Request
 	w := httptest.NewRecorder()

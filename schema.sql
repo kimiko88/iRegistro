@@ -23,11 +23,11 @@ CREATE INDEX idx_schools_code ON schools(code);
 CREATE TYPE user_role AS ENUM (
     'SuperAdmin', 
     'Admin', 
-    'Dirigente', 
-    'Insegnante', 
-    'Genitore', 
-    'Studente', 
-    'Segreteria'
+    'Principal', 
+    'Teacher', 
+    'Parent', 
+    'Student', 
+    'Secretary'
 );
 
 -- 3. Users Table
@@ -607,7 +607,7 @@ SELECT
     SUM(csa.hours_per_week) AS total_hours
 FROM users u
 JOIN class_subject_assignments csa ON u.id = csa.teacher_id
-WHERE u.role = 'Insegnante'
+WHERE u.role = 'Teacher'
 GROUP BY u.id, u.first_name, u.last_name;
 
 -- 4. Colloquium Availability View

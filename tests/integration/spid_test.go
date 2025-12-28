@@ -33,7 +33,7 @@ func (m *MockUserRepository) FindByEmail(email string) (*domain.User, error) {
 	if user, ok := m.users[email]; ok {
 		return user, nil
 	}
-	return nil, domain.ErrNotFound
+	return nil, domain.ErrUserNotFound
 }
 
 func (m *MockUserRepository) FindByID(id uint) (*domain.User, error) {
@@ -42,7 +42,7 @@ func (m *MockUserRepository) FindByID(id uint) (*domain.User, error) {
 			return user, nil
 		}
 	}
-	return nil, domain.ErrNotFound
+	return nil, domain.ErrUserNotFound
 }
 
 func (m *MockUserRepository) GetByExternalID(ctx context.Context, externalID string) (*domain.User, error) {
@@ -51,7 +51,7 @@ func (m *MockUserRepository) GetByExternalID(ctx context.Context, externalID str
 			return user, nil
 		}
 	}
-	return nil, domain.ErrNotFound
+	return nil, domain.ErrUserNotFound
 }
 
 func (m *MockUserRepository) Update(user *domain.User) error {
@@ -63,6 +63,44 @@ func (m *MockUserRepository) FindAll(schoolID uint) ([]domain.User, error) {
 	return nil, nil
 }
 
+// MockAuthRepository for testing
+type MockAuthRepository struct {
+	sessions      map[string]*domain.Session
+	refreshTokens map[string]*domain.RefreshToken
+}
+
+func NewMockAuthRepository() *MockAuthRepository {
+	return &MockAuthRepository{
+		sessions:      make(map[string]*domain.Session),
+		refreshTokens: make(map[string]*domain.RefreshToken),
+	}
+}
+
+func (m *MockAuthRepository) CreateSession(session *domain.Session) error {
+	m.sessions[session.TokenHash] = session
+	return nil
+}
+
+func (m *MockAuthRepository) StoreRefreshToken(token *domain.RefreshToken) error {
+	m.refreshTokens[token.TokenHash] = token
+	return nil
+}
+
+func (m *MockAuthRepository) RevokeRefreshToken(tokenHash string) error {
+	if token, ok := m.refreshTokens[tokenHash]; ok {
+		now := time.Now()
+		token.RevokedAt = &now
+	}
+	return nil
+}
+
+func (m *MockAuthRepository) GetRefreshToken(tokenHash string) (*domain.RefreshToken, error) {
+	if token, ok := m.refreshTokens[tokenHash]; ok {
+		return token, nil
+	}
+	return nil, domain.ErrUserNotFound
+}
+
 // createMockSAMLAssertion creates a mock SAML assertion for testing
 func createMockSAMLAssertion(taxCode, name, familyName, email, provider string) *saml.Assertion {
 	now := time.Now()
@@ -71,7 +109,7 @@ func createMockSAMLAssertion(taxCode, name, familyName, email, provider string) 
 		ID:           "_" + uuid.New().String(),
 		IssueInstant: now,
 		Version:      "2.0",
-		Issuer: &saml.Issuer{
+		Issuer: saml.Issuer{
 			Value: provider,
 		},
 		Subject: &saml.Subject{
@@ -80,8 +118,8 @@ func createMockSAMLAssertion(taxCode, name, familyName, email, provider string) 
 			},
 		},
 		Conditions: &saml.Conditions{
-			NotBefore:    &now,
-			NotOnOrAfter: timePtr(now.Add(5 * time.Minute)),
+			NotBefore:    now,
+			NotOnOrAfter: now.Add(5 * time.Minute),
 		},
 		AttributeStatements: []saml.AttributeStatement{
 			{
@@ -121,14 +159,14 @@ func createMockSAMLAssertion(taxCode, name, familyName, email, provider string) 
 func TestSPIDAuthenticationFlow(t *testing.T) {
 	// Setup
 	mockUserRepo := NewMockUserRepository()
-	mockTokenService := &auth.TokenService{} // This would need proper initialization
+	jwtSecret := "test-secret-key"
 
 	// Create mock service provider
 	sp := &saml.ServiceProvider{
 		EntityID: "https://test.esempio.it",
 	}
 
-	spidService := auth.NewSPIDService(mockUserRepo, mockTokenService, sp)
+	spidService := auth.NewSPIDService(mockUserRepo, jwtSecret, sp)
 
 	t.Run("Successful SPID Authentication - New User", func(t *testing.T) {
 		// Create mock SAML assertion
@@ -152,7 +190,7 @@ func TestSPIDAuthenticationFlow(t *testing.T) {
 		assert.Contains(t, attrs.Provider, "poste")
 
 		// Create or get user
-		schoolID := uuid.New()
+		schoolID := uint(1)
 		user, err := spidService.GetOrCreateUserBySPID(context.Background(), attrs, schoolID)
 		require.NoError(t, err)
 
@@ -189,7 +227,7 @@ func TestSPIDAuthenticationFlow(t *testing.T) {
 		attrs, err := spidService.ValidateSAMLAssertion(context.Background(), assertion)
 		require.NoError(t, err)
 
-		schoolID := uuid.New()
+		schoolID := uint(1)
 		user, err := spidService.GetOrCreateUserBySPID(context.Background(), attrs, schoolID)
 		require.NoError(t, err)
 
@@ -223,7 +261,7 @@ func TestSPIDAuthenticationFlow(t *testing.T) {
 
 		// Set expiry to past
 		pastTime := time.Now().Add(-10 * time.Minute)
-		assertion.Conditions.NotOnOrAfter = &pastTime
+		assertion.Conditions.NotOnOrAfter = pastTime
 
 		_, err := spidService.ValidateSAMLAssertion(context.Background(), assertion)
 		assert.Error(t, err)

@@ -83,4 +83,15 @@ func (h *SecretaryHandler) BatchPrint(c *gin.Context) {
 	c.Header("Content-Type", "application/pdf")
 	c.Header("Content-Disposition", "attachment; filename=batch.pdf")
 	c.Data(http.StatusOK, "application/pdf", pdfBytes)
+	c.Data(http.StatusOK, "application/pdf", pdfBytes)
+}
+
+func (h *SecretaryHandler) GetDashboardStats(c *gin.Context) {
+	schoolID := uint(1) // Placeholder, replace with actual context user school ID
+	stats, err := h.service.GetDashboardStats(schoolID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, stats)
 }

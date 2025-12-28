@@ -1,80 +1,85 @@
-<script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useTeacherStore } from '@/stores/teacher';
-import MarksGrid from '@/components/teacher/MarksGrid.vue';
-import Modal from '@/components/shared/Modal.vue';
-import { useUIStore } from '@/stores/ui';
-
-const teacherStore = useTeacherStore();
-const uiStore = useUIStore();
-
-const isModalOpen = ref(false);
-const editingMark = ref<any>({});
-
-onMounted(() => {
-    teacherStore.fetchMarks(1); // Subject ID irrelevant for mock
-});
-
-const openAddMarkModal = (studentId: number) => {
-    editingMark.value = { studentId, value: null, type: 'Oral', date: new Date().toISOString().split('T')[0] };
-    isModalOpen.value = true;
-};
-
-const openEditMarkModal = (mark: any) => {
-    editingMark.value = { ...mark };
-    isModalOpen.value = true;
-};
-
-const saveMark = async () => {
-    if (!editingMark.value.value) return;
-    
-    await teacherStore.saveMark(editingMark.value);
-    uiStore.addNotification({ type: 'success', message: 'Mark saved successfully' });
-    isModalOpen.value = false;
-};
-</script>
-
 <template>
-  <div class="space-y-4">
-      <div class="flex justify-between items-center">
-          <h3 class="text-xl font-bold">Gradebook - {{ teacherStore.selectedClass?.subject }}</h3>
-          <div class="space-x-2">
-              <button class="btn btn-sm btn-outline">Analytics</button>
-              <button class="btn btn-sm btn-outline">Import CSV</button>
+  <div class="h-full flex flex-col gap-4">
+      <!-- Toolbar -->
+      <div class="flex justify-between items-center bg-base-100 p-4 rounded-box shadow-sm">
+          <div class="flex gap-4 items-center">
+             <div class="stats stats-horizontal shadow compact">
+                <div class="stat px-4 py-2">
+                    <div class="stat-title text-xs">Class Average</div>
+                    <div class="stat-value text-lg text-primary">{{ classAverage }}</div>
+                </div>
+                 <div class="stat px-4 py-2">
+                    <div class="stat-title text-xs">Total Marks</div>
+                    <div class="stat-value text-lg">{{ store.marks.length }}</div>
+                </div>
+             </div>
           </div>
+
+          <button class="btn btn-primary gap-2" @click="openAddMarkModal">
+              <span>+</span> Add Mark
+          </button>
       </div>
 
+      <!-- Grid -->
       <MarksGrid 
-          :students="teacherStore.students" 
-          :marks="teacherStore.marks"
-          @add-mark="openAddMarkModal"
-          @edit-mark="openEditMarkModal"
+        :students="store.students" 
+        :marks="store.marks"
+        @save="handleBulkSave"
+        class="flex-1"
       />
 
-      <Modal :title="editingMark.id ? 'Edit Mark' : 'Add Mark'" :isOpen="isModalOpen" @close="isModalOpen = false">
-           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div class="form-control">
-                   <label class="label">Value</label>
-                   <input type="number" step="0.5" max="10" min="1" class="input input-bordered" v-model.number="editingMark.value" />
-               </div>
-               <div class="form-control">
-                   <label class="label">Date</label>
-                   <input type="date" class="input input-bordered" v-model="editingMark.date" />
-               </div>
-               <div class="form-control">
-                   <label class="label">Type</label>
-                   <select class="select select-bordered" v-model="editingMark.type">
-                       <option>Oral</option>
-                       <option>Written</option>
-                       <option>Practical</option>
-                   </select>
-               </div>
-           </div>
-           
-           <template #actions>
-               <button class="btn" @click="isModalOpen = false">Cancel</button>
-               <button class="btn btn-primary" @click="saveMark">Save</button>
-           </template>
-      </Modal>
+      <!-- Add Mark Modal stub -->
+      <!-- Ideally we reuse Modal.vue -->
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useTeacherStore } from '@/stores/teacher';
+import MarksGrid from '@/components/teacher/MarksGrid.vue';
+import { useUIStore } from '@/stores/ui';
+
+const store = useTeacherStore();
+const ui = useUIStore();
+
+const classAverage = computed(() => {
+    if (!store.marks.length) return '-';
+    const sum = store.marks.reduce((acc, m) => acc + m.value, 0);
+    return (sum / store.marks.length).toFixed(2);
+});
+
+const openAddMarkModal = () => {
+    // TODO: proper modal
+    // Creating a dummy mark for now to test reactivity
+    if(store.students.length) {
+        store.saveMark({
+             student_id: store.students[0].id,
+             subject_id: store.currentSubjectId || 1,
+             teacher_id: 3, // Current user
+             class_id: store.selectedClassId,
+             value: 8.5,
+             type: 'NUMERIC',
+             date: new Date().toISOString()
+        });
+    }
+};
+
+const handleBulkSave = async (changes: any[]) => {
+    // Process bulk changes
+    // In real app, verify backend has bulk endpoint or loop
+    // Demo: Loop
+    for (const ch of changes) {
+        // ch.key is "date-type" string from Grid
+        const [date, type] = ch.key.split('-'); // Simple parsing
+        await store.saveMark({
+            student_id: ch.student_id,
+            subject_id: store.currentSubjectId || 1,
+            teacher_id: 3,
+            class_id: store.selectedClassId,
+            value: ch.value,
+            type: type || 'NUMERIC',
+            date: date || new Date().toISOString()
+        });
+    }
+};
+</script>

@@ -6,14 +6,18 @@ export const useTeacherStore = defineStore('teacher', {
     state: () => ({
         classes: [] as any[],
         selectedClassId: null as number | null,
-        currentClass: null as any | null,
         students: [] as any[],
         marks: [] as any[],
-        schedule: [] as any[],
+        absences: [] as any[],
+        // Mapping of classId -> subjectId
+        classSubjectMap: {} as Record<number, number>,
+        // Mock Coordinator Role
+        isCoordinator: true,
     }),
 
     getters: {
-        selectedClass: (state) => state.classes.find(c => c.id === state.selectedClassId),
+        currentClass: (state) => state.classes.find(c => c.id === state.selectedClassId),
+        currentSubjectId: (state) => state.selectedClassId ? state.classSubjectMap[state.selectedClassId] : null
     },
 
     actions: {
@@ -22,59 +26,97 @@ export const useTeacherStore = defineStore('teacher', {
             ui.setLoading(true);
             try {
                 const res = await teacherApi.getClasses();
+                // Backend returns list of { class: {...}, subject: {...} } assignments
+                // We map this to a clean class list and store the subject mapping
+                this.classes = res.data.map((item: any) => {
+                    this.classSubjectMap[item.class.id] = item.subject.id;
+                    return {
+                        id: item.class.id,
+                        name: `${item.class.grade}${item.class.section}`,
+                        year: item.class.year,
+                        subjectName: item.subject.name
+                    };
+                });
 
-                // Backend returns Assignment = { class: {...}, subject: {...} }
-                // We Map it so Select works
-                this.classes = res.data.map((a: any) => ({
-                    id: a.class.id,
-                    name: `${a.class.grade}${a.class.section}`,
-                    subject: a.subject.name,
-                    subjectId: a.subject.id
-                }));
-
+                // Auto-select first class if none selected
                 if (!this.selectedClassId && this.classes.length > 0) {
-                    this.selectedClassId = this.classes[0].id;
-                    this.fetchStudents(this.classes[0].id);
+                    this.selectClass(this.classes[0].id);
                 }
+            } catch (err) {
+                ui.addNotification({ type: 'error', message: 'Failed to load classes' });
             } finally {
                 ui.setLoading(false);
             }
         },
-        selectClass(id: number) {
-            this.selectedClassId = id;
-            this.fetchStudents(id);
-            const cls = this.classes.find(c => c.id === id);
-            if (cls && cls.subjectId) {
-                this.fetchMarks(cls.subjectId);
+
+        selectClass(classId: number) {
+            this.selectedClassId = classId;
+            this.fetchStudents(classId);
+            const subjectId = this.classSubjectMap[classId];
+            if (subjectId) {
+                this.fetchMarks(classId, subjectId);
             }
         },
+
         async fetchStudents(classId: number) {
             const ui = useUIStore();
-            ui.setLoading(true);
+            // Don't block UI fully, maybe just grid loader
             try {
                 const res = await teacherApi.getStudents(classId);
                 this.students = res.data;
-            } finally {
-                ui.setLoading(false);
+            } catch (err) {
+                ui.addNotification({ type: 'error', message: 'Failed to load students' });
             }
         },
-        async fetchMarks(subjectId: number) {
-            if (!this.selectedClassId) return;
+
+        async fetchMarks(classId: number, subjectId: number) {
             try {
-                const res = await teacherApi.getMarks(this.selectedClassId, subjectId);
+                const res = await teacherApi.getMarks(classId, subjectId);
                 this.marks = res.data;
-            } catch (e) {
-                console.error("Failed to fetch marks");
+            } catch (err) {
+                console.error("Error fetching marks", err);
             }
         },
-        async saveMark(mark: any) {
+
+        async saveMark(markData: any) {
             const ui = useUIStore();
             try {
-                const res = await teacherApi.saveMark(mark);
+                const res = await teacherApi.saveMark(markData);
                 this.marks.push(res.data);
-            } catch (e) {
+                ui.addNotification({ type: 'success', message: 'Mark saved' });
+                return true;
+            } catch (err) {
                 ui.addNotification({ type: 'error', message: 'Failed to save mark' });
+                return false;
+            }
+        },
+
+        async fetchAbsences(classId: number) {
+            const ui = useUIStore();
+            // ui.setLoading(true); // maybe subtle loading
+            try {
+                const res = await teacherApi.getAbsences(classId);
+                this.absences = res.data;
+            } catch (e) {
+                console.error(e);
+                ui.addNotification({ type: 'error', message: 'Failed to fetch absences' });
+            } finally {
+                // ui.setLoading(false);
+            }
+        },
+
+        async saveAbsence(absenceData: any) {
+            const ui = useUIStore();
+            try {
+                const res = await teacherApi.saveAbsence(absenceData);
+                this.absences.push(res.data);
+                // ui.addNotification({ type: 'success', message: 'Absence saved' }); 
+                // Silent success for quick marking? Or toast
+                return true;
+            } catch (e) {
+                ui.addNotification({ type: 'error', message: 'Failed to save absence' });
+                return false;
             }
         }
-    },
+    }
 });

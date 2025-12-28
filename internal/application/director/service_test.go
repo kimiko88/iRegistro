@@ -121,6 +121,12 @@ func (m *MockRepo) GetOrientationParticipationsByStudentID(studentID uint) ([]do
 	return nil, nil
 }
 func (m *MockRepo) DeleteDocument(id uint) error { return nil }
+func (m *MockRepo) CountDocumentsByStatus(schoolID uint, status domain.DocumentStatus) (int64, error) {
+	return 0, nil
+}
+func (m *MockRepo) CountDocumentsUpdatedSince(schoolID uint, status []domain.DocumentStatus, since time.Time) (int64, error) {
+	return 0, nil
+}
 
 // Actual Tests
 

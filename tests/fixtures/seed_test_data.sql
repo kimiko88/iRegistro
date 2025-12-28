@@ -7,8 +7,8 @@ VALUES (1, 'Test School', 'TEST001', 'Test City');
 -- 2. Users
 INSERT INTO users (id, school_id, email, password_hash, role, first_name, last_name) VALUES
 (1, 1, 'admin@test.com', '$2a$10$test', 'Admin', 'Admin', 'User'),
-(2, 1, 'teacher1@test.com', '$2a$10$test', 'Insegnante', 'John', 'Doe'),
-(3, 1, 'student1@test.com', '$2a$10$test', 'Studente', 'Jane', 'Smith');
+(2, 1, 'teacher1@test.com', '$2a$10$test', 'Teacher', 'John', 'Doe'),
+(3, 1, 'student1@test.com', '$2a$10$test', 'Student', 'Jane', 'Smith');
 
 -- 3. Academic
 INSERT INTO campuses (id, school_id, name) VALUES (1, 1, 'Main Campus');

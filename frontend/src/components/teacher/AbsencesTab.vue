@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useTeacherStore } from '@/stores/teacher';
 import teacherApi from '@/services/teacher'; // Direct API for specific calls or extend store
 
@@ -91,7 +91,7 @@ const fetchAbsences = async () => {
   // This would typically fetch from API. 
   // For now, simulate or use store if extended.
   try {
-    const res = await teacherApi.getAbsences(store.selectedClassId, currentDate.value);
+    const res = await teacherApi.getAbsences(store.selectedClassId); // Removed currentDate if not supported yet
     // Populate map
     dailyAbsences.value.clear();
     res.data.forEach((a: any) => {
@@ -150,7 +150,10 @@ const saveDailyAbsences = async () => {
     note: data.note
   })).filter(a => a.type !== null || a.note); // Only send actual events
 
-  await teacherApi.saveAbsences(store.selectedClassId, payload);
+  await teacherApi.saveAbsence({
+      classId: store.selectedClassId, 
+      payload 
+  });
   // Toast success
 };
 </script>

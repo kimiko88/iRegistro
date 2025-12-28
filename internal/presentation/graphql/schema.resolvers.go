@@ -57,17 +57,16 @@ func (r *queryResolver) School(ctx context.Context, id string) (*model.School, e
 
 	var campuses []*model.Campus
 	for _, c := range campusesData {
-		// Filter curriculums for this campus
+		// Filter curriculums for this school (Simplified: listing all school curriculums for now,
+		// or if you want to keep them associated with campuses you'd need a through table or logic)
+		// Usually curriculums are school-wide, so we can just attach them to the school or repeat them.
 		var campusCurriculums []*model.Curriculum
 		for _, cur := range curriculumsData {
-			if cur.CampusID == c.ID {
-				campusCurriculums = append(campusCurriculums, &model.Curriculum{
-					ID:   fmt.Sprintf("%d", cur.ID),
-					Name: cur.Name,
-					Code: &cur.Code,
-					// Classes would be next level deep
-				})
-			}
+			campusCurriculums = append(campusCurriculums, &model.Curriculum{
+				ID:   fmt.Sprintf("%d", cur.ID),
+				Name: cur.Name,
+				Code: &cur.Code,
+			})
 		}
 
 		campuses = append(campuses, &model.Campus{

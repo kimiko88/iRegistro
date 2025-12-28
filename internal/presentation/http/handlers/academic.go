@@ -114,11 +114,20 @@ func (h *AcademicHandler) GetClasses(c *gin.Context) {
 }
 
 func (h *AcademicHandler) CreateClass(c *gin.Context) {
+	schoolID, err := strconv.Atoi(c.Param("schoolId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid school id"})
+		return
+	}
+
 	var class domain.Class
 	if err := c.ShouldBindJSON(&class); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	class.SchoolID = uint(schoolID)
+
 	if err := h.service.CreateClass(&class); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
