@@ -149,6 +149,12 @@ const routes: Array<RouteRecordRaw> = [
                 meta: { requiresRole: 'Secretary' }
             },
             {
+                path: 'secretary/subjects',
+                name: 'SecretarySubjectManagement',
+                component: () => import('@/views/secretary/SubjectManagement.vue'),
+                meta: { requiresRole: 'Secretary' }
+            },
+            {
                 path: 'secretary/archive',
                 name: 'SecretaryArchive',
                 component: Archive,

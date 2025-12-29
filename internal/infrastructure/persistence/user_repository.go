@@ -67,6 +67,10 @@ func (r *UserRepository) GetByExternalID(ctx context.Context, externalID string)
 }
 
 func (r *UserRepository) Update(user *domain.User) error {
+	// Use Association to replace subjects
+	if err := r.db.Model(user).Association("Subjects").Replace(user.Subjects); err != nil {
+		return err
+	}
 	return r.db.Save(user).Error
 }
 

@@ -97,6 +97,47 @@ func (h *AcademicHandler) CreateCurriculum(c *gin.Context) {
 	c.JSON(http.StatusCreated, curr)
 }
 
+// --- Subjects ---
+
+func (h *AcademicHandler) GetSubjects(c *gin.Context) {
+	schoolIDStr := c.Param("schoolId")
+	schoolID, err := strconv.ParseUint(schoolIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid school ID"})
+		return
+	}
+
+	subjects, err := h.service.GetSubjectsBySchool(uint(schoolID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, subjects)
+}
+
+func (h *AcademicHandler) CreateSubject(c *gin.Context) {
+	schoolIDStr := c.Param("schoolId")
+	schoolID, err := strconv.ParseUint(schoolIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid school ID"})
+		return
+	}
+
+	var subject domain.Subject
+	if err := c.ShouldBindJSON(&subject); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	subject.SchoolID = uint(schoolID)
+
+	if err := h.service.CreateSubject(&subject); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, subject)
+}
+
 // --- Classes ---
 
 func (h *AcademicHandler) GetClasses(c *gin.Context) {

@@ -28,6 +28,7 @@ type AcademicRepository interface {
 	CreateSubject(subject *Subject) error
 	GetSubjectByID(id uint) (*Subject, error)
 	GetSubjectsByIDs(ids []uint) ([]Subject, error) // Added
+	GetSubjects(schoolID uint) ([]Subject, error)   // Get all subjects for a school
 	AssignSubjectToClass(assignment *ClassSubjectAssignment) error
 	GetAssignmentsByTeacherID(teacherID uint) ([]ClassSubjectAssignment, error) // Added
 

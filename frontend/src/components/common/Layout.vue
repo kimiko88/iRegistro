@@ -48,6 +48,7 @@ const menuItems = computed(() => {
     { label: 'Archive', to: '/secretary/archive', icon: Archive, roles: ['Secretary'] },
     { label: 'Classes', to: '/secretary/classes', icon: BookOpen, roles: ['Secretary'] },
     { label: 'Users', to: '/secretary/users', icon: Users, roles: ['Secretary'] },
+    { label: 'Subjects', to: '/secretary/subjects', icon: BookOpen, roles: ['Secretary'] },
 
     // Director
     { label: 'School Overview', to: '/director', icon: Home, roles: ['Principal'] },

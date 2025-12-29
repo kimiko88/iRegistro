@@ -130,6 +130,12 @@ func (r *AcademicRepository) GetSubjectsByIDs(ids []uint) ([]domain.Subject, err
 	return subjects, err
 }
 
+func (r *AcademicRepository) GetSubjects(schoolID uint) ([]domain.Subject, error) {
+	var subjects []domain.Subject
+	err := r.db.Where("school_id = ?", schoolID).Find(&subjects).Error
+	return subjects, err
+}
+
 func (r *AcademicRepository) AssignSubjectToClass(assignment *domain.ClassSubjectAssignment) error {
 	return r.db.Create(assignment).Error
 }

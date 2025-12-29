@@ -86,6 +86,11 @@ func (s *AcademicService) GetSubjectByID(id uint) (*domain.Subject, error) {
 	return s.repo.GetSubjectByID(id)
 }
 
+func (s *AcademicService) GetSubjectsBySchool(schoolID uint) ([]domain.Subject, error) {
+	// Query subjects filtered by school ID
+	return s.repo.GetSubjects(schoolID)
+}
+
 func (s *AcademicService) AssignSubjectToClass(assignment *domain.ClassSubjectAssignment) error {
 	return s.repo.AssignSubjectToClass(assignment)
 }

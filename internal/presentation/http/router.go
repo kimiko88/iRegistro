@@ -77,6 +77,9 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 				schools.GET("/curriculums", academicHandler.GetCurriculums)
 				schools.POST("/curriculums", academicHandler.CreateCurriculum)
 
+				schools.GET("/subjects", academicHandler.GetSubjects)
+
+				schools.POST("/subjects", academicHandler.CreateSubject)
 				schools.GET("/classes", academicHandler.GetClasses)
 
 				schools.GET("/classes/:classId", academicHandler.GetClassDetails)
