@@ -224,9 +224,9 @@ const assignSubject = async () => {
              </div>
              <div class="form-control">
                 <label class="label">Teacher</label>
-                <select class="select select-bordered" v-model="newAssignment.teacherId" :disabled="!newAssignment.subjectId">
+                 <select class="select select-bordered" v-model="newAssignment.teacherId" :disabled="!newAssignment.subjectId">
                      <option disabled selected :value="null">Select Teacher</option>
-                    <option v-for="t in filteredTeachers" :key="t.id" :value="t.id">{{ t.first_name }} {{ t.last_name }}</option>
+                    <option v-for="t in filteredTeachers" :key="t.id" :value="t.id">{{ t.firstName }} {{ t.lastName }}</option>
                 </select>
                 <label class="label" v-if="newAssignment.subjectId && filteredTeachers.length === 0">
                     <span class="label-text-alt text-warning">No teachers found for this subject.</span>

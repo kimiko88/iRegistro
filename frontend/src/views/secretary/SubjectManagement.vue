@@ -2,9 +2,9 @@
   <div class="p-6 space-y-6">
     <div class="flex justify-between items-center">
       <h1 class="text-3xl font-bold">Gestione Materie</h1>
-      <button @click="showCreateModal = true" class="btn btn-primary gap-2">
+      <button @click="showModal = true" class="btn btn-primary gap-2">
         <Plus class="w-5 h-5" />
-        Nuova Mat eria
+        Nuova Materia
       </button>
     </div>
 
@@ -19,35 +19,41 @@
           <div class="card-body">
             <h3 class="card-title text-lg">{{ subject.name }}</h3>
             <p class="text-sm text-gray-600">Codice: {{ subject.code }}</p>
-            <p class="text-sm text-gray-600">Ore settimanali: {{ subject.hours_per_week }}</p>
+            <p class="text-sm text-gray-600" v-if="subject.competition_class">Classe di concorso: {{ subject.competition_class }}</p>
+            <div class="card-actions justify-end mt-4">
+              <button @click="editSubject(subject)" class="btn btn-sm btn-ghost">
+                <Edit class="w-4 h-4" /> Modifica
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Create Subject Modal -->
+    <!-- Create/Edit Subject Modal -->
     <FormModal
-      :isOpen="showCreateModal"
-      title="Crea Nuova Materia"
-      submitLabel="Crea"
-      :loading="creating"
-      @close="showCreateModal = false"
-      @submit="handleCreate"
+      :isOpen="showModal"
+      :title="editingSubject ? 'Modifica Materia' : 'Crea Nuova Materia'"
+      :submitLabel="editingSubject ? 'Salva' : 'Crea'"
+      :loading="saving"
+      @close="closeModal"
+      @submit="handleSubmit"
     >
       <div class="space-y-4">
         <div class="form-control">
           <label class="label"><span class="label-text">Nome Materia</span></label>
-          <input type="text" v-model="newSubject.name" class="input input-bordered" placeholder="es. Matematica" required />
+          <input type="text" v-model="formData.name" class="input input-bordered" placeholder="es. Matematica" required />
         </div>
         
         <div class="form-control">
           <label class="label"><span class="label-text">Codice</span></label>
-          <input type="text" v-model="newSubject.code" class="input input-bordered" placeholder="es. MAT01" required />
+          <input type="text" v-model="formData.code" class="input input-bordered" placeholder="es. MAT01" required />
         </div>
         
         <div class="form-control">
-          <label class="label"><span class="label-text">Ore Settimanali</span></label>
-          <input type="number" v-model.number="newSubject.hours_per_week" class="input input-bordered" min="1" max="10" required />
+          <label class="label"><span class="label-text">Classe di Concorso</span></label>
+          <input type="text" v-model="formData.competition_class" class="input input-bordered" placeholder="es. A026, A027" required />
+          <label class="label"><span class="label-text-alt">Codice della classe di concorso ministeriale</span></label>
         </div>
       </div>
     </FormModal>
@@ -60,20 +66,21 @@ import { useAuthStore } from '@/stores/auth';
 import { useNotificationStore } from '@/stores/notification';
 import api from '@/services/api';
 import FormModal from '@/components/shared/FormModal.vue';
-import { Plus } from 'lucide-vue-next';
+import { Plus, Edit } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
 
 const subjects = ref<any[]>([]);
 const loading = ref(false);
-const creating = ref(false);
-const showCreateModal = ref(false);
+const saving = ref(false);
+const showModal = ref(false);
+const editingSubject = ref<any>(null);
 
-const newSubject = ref({
+const formData = ref({
   name: '',
   code: '',
-  hours_per_week: 3
+  competition_class: ''
 });
 
 const fetchSubjects = async () => {
@@ -93,8 +100,20 @@ const fetchSubjects = async () => {
   }
 };
 
-const handleCreate = async () => {
-  creating.value = true;
+const editSubject = (subject: any) => {
+  editingSubject.value = subject;
+  formData.value = { ...subject };
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+  editingSubject.value = null;
+  formData.value = { name: '', code: '', competition_class: '' };
+};
+
+const handleSubmit = async () => {
+  saving.value = true;
   try {
     const schoolId = authStore.user?.schoolId;
     if (!schoolId) {
@@ -102,15 +121,21 @@ const handleCreate = async () => {
       return;
     }
     
-    await api.post(`/schools/${schoolId}/subjects`, newSubject.value);
-    notificationStore.success('Materia creata con successo');
-    showCreateModal.value = false;
-    newSubject.value = { name: '', code: '', hours_per_week: 3 };
+    if (editingSubject.value) {
+      // Update existing subject
+      await api.put(`/schools/${schoolId}/subjects/${editingSubject.value.id}`, formData.value);
+      notificationStore.success('Materia aggiornata con successo');
+    } else {
+      // Create new subject
+      await api.post(`/schools/${schoolId}/subjects`, formData.value);
+      notificationStore.success('Materia creata con successo');
+    }
+    closeModal();
     fetchSubjects();
   } catch (err) {
-    notificationStore.error('Errore nella creazione della materia');
+    notificationStore.error(editingSubject.value ? 'Errore nell\'aggiornamento' : 'Errore nella creazione');
   } finally {
-    creating.value = false;
+    saving.value = false;
   }
 };
 
