@@ -28,19 +28,62 @@
         class="flex-1"
       />
 
-      <!-- Add Mark Modal stub -->
-      <!-- Ideally we reuse Modal.vue -->
+      <FormModal
+        :isOpen="showAddModal"
+        title="Add New Mark"
+        :loading="saving"
+        @close="showAddModal = false"
+        @submit="handleSaveMark"
+      >
+        <div class="grid grid-cols-1 gap-4">
+            <div class="form-control">
+                <label class="label"><span class="label-text">Student</span></label>
+                <select class="select select-bordered" v-model="markForm.student_id" required>
+                    <option value="" disabled>Select Student</option>
+                    <option v-for="student in store.students" :key="student.id" :value="student.id">
+                        {{ student.lastName }} {{ student.firstName }}
+                    </option>
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Mark (1-10)</span></label>
+                    <input type="number" step="0.25" min="1" max="10" class="input input-bordered" v-model="markForm.value" required />
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Type</span></label>
+                    <select class="select select-bordered" v-model="markForm.type">
+                        <option value="ORAL">Oral</option>
+                        <option value="WRITTEN">Written</option>
+                        <option value="PRACTICAL">Practical</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-control">
+                <label class="label"><span class="label-text">Date</span></label>
+                <input type="date" class="input input-bordered" v-model="markForm.date" required />
+            </div>
+
+             <div class="form-control">
+                <label class="label"><span class="label-text">Notes</span></label>
+                <textarea class="textarea textarea-bordered" v-model="markForm.description"></textarea>
+            </div>
+        </div>
+      </FormModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, reactive } from 'vue';
 import { useTeacherStore } from '@/stores/teacher';
 import MarksGrid from '@/components/teacher/MarksGrid.vue';
-import { useUIStore } from '@/stores/ui';
+import FormModal from '@/components/shared/FormModal.vue';
+import { useNotificationStore } from '@/stores/notification';
 
 const store = useTeacherStore();
-const ui = useUIStore();
+const notificationStore = useNotificationStore();
 
 const classAverage = computed(() => {
     if (!store.marks.length) return '-';
@@ -48,29 +91,54 @@ const classAverage = computed(() => {
     return (sum / store.marks.length).toFixed(2);
 });
 
+const showAddModal = ref(false);
+const saving = ref(false);
+const markForm = reactive({
+    student_id: '',
+    value: null as number | null,
+    type: 'ORAL',
+    date: new Date().toISOString().split('T')[0],
+    description: ''
+});
+
 const openAddMarkModal = () => {
-    // TODO: proper modal
-    // Creating a dummy mark for now to test reactivity
-    if(store.students.length) {
-        store.saveMark({
-             student_id: store.students[0].id,
-             subject_id: store.currentSubjectId || 1,
-             teacher_id: 3, // Current user
+    markForm.student_id = '';
+    markForm.value = null;
+    markForm.type = 'ORAL';
+    markForm.date = new Date().toISOString().split('T')[0];
+    markForm.description = '';
+    showAddModal.value = true;
+};
+
+const handleSaveMark = async () => {
+    if (!markForm.student_id || !markForm.value) {
+        notificationStore.error('Please select a student and enter a mark');
+        return;
+    }
+    
+    saving.value = true;
+    try {
+        await store.saveMark({
+             student_id: Number(markForm.student_id),
+             subject_id: store.currentSubjectId || 1, // Fallback needs to be addressed if 0
+             teacher_id: 3, // TODO: Get from auth store
              class_id: store.selectedClassId,
-             value: 8.5,
-             type: 'NUMERIC',
-             date: new Date().toISOString()
+             value: Number(markForm.value),
+             type: markForm.type,
+             date: new Date(markForm.date).toISOString()
         });
+        notificationStore.success('Mark added successfully');
+        showAddModal.value = false;
+    } catch (err) {
+        notificationStore.error('Failed to save mark');
+    } finally {
+        saving.value = false;
     }
 };
 
 const handleBulkSave = async (changes: any[]) => {
-    // Process bulk changes
-    // In real app, verify backend has bulk endpoint or loop
-    // Demo: Loop
     for (const ch of changes) {
-        // ch.key is "date-type" string from Grid
-        const [date, type] = ch.key.split('-'); // Simple parsing
+        const [date, type] = ch.key.split('-'); 
         await store.saveMark({
             student_id: ch.student_id,
             subject_id: store.currentSubjectId || 1,
@@ -81,5 +149,6 @@ const handleBulkSave = async (changes: any[]) => {
             date: date || new Date().toISOString()
         });
     }
+    notificationStore.success('Marks saved successfully');
 };
 </script>

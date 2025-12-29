@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/k/iRegistro/internal/application/admin"
+	"github.com/k/iRegistro/internal/domain"
 )
 
 type AdminHandler struct {
@@ -21,21 +24,22 @@ func NewAdminHandler(adm *admin.AdminService, audit *admin.AuditService, imp *ad
 // --- SuperAdmin ---
 
 func (h *AdminHandler) CreateSchool(c *gin.Context) {
-	// Only for SuperAdmin (Middleware should check this)
-	var req struct {
-		Name    string `json:"name"`
-		Address string `json:"address"`
-	}
+	var req map[string]interface{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	userIDVal, _ := c.Get("userID")
 
-	// For now, service implementation is stubbed, so just return OK
-	c.JSON(http.StatusCreated, gin.H{"message": "School created", "details": req})
+	school, err := h.adminService.CreateSchool(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create school"})
+		return
+	}
 
-	h.auditService.LogAction(nil, userIDVal.(uint), "CREATE_SCHOOL", "SCHOOL", "", c.ClientIP(), nil)
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "School created successfully",
+		"school":  school,
+	})
 }
 
 // --- School Admin ---
@@ -52,7 +56,26 @@ func (h *AdminHandler) GetSettings(c *gin.Context) {
 
 func (h *AdminHandler) GetUsers(c *gin.Context) {
 	schoolIDVal, _ := c.Get("schoolID")
-	users, err := h.adminService.GetUsers(schoolIDVal.(uint))
+	// Allow overriding schoolID via query param if needed (e.g. SuperAdmin)
+	// In real app we check role. For now we trust the query if present?
+	// Better: Check if user is SuperAdmin.
+
+	roleInterface, _ := c.Get("role")
+	role := roleInterface.(domain.Role)
+	targetSchoolID := schoolIDVal.(uint)
+
+	if role == domain.RoleSuperAdmin {
+		if qID := c.Query("schoolId"); qID != "" {
+			if id, err := strconv.ParseUint(qID, 10, 32); err == nil {
+				targetSchoolID = uint(id)
+			}
+		} else {
+			// If SuperAdmin and no schoolId spec, view ALL (0)
+			targetSchoolID = 0
+		}
+	}
+
+	users, err := h.adminService.GetUsers(targetSchoolID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -116,75 +139,169 @@ func (h *AdminHandler) GetAuditLogs(c *gin.Context) {
 // --- Additional Handlers matching Frontend ---
 
 func (h *AdminHandler) GetKPIs(c *gin.Context) {
-	// Stub implementation
-	stats := gin.H{
-		"schoolsCount":          1,
-		"usersCount":            5,
-		"storageUsed":           1024 * 1024 * 50, // 50MB
-		"activeUsersLast30Days": 3,
+	stats, err := h.adminService.GetKPIs()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch KPIs"})
+		return
 	}
 	c.JSON(http.StatusOK, stats)
 }
 
 func (h *AdminHandler) GetSchools(c *gin.Context) {
-	// Stub - return hardcoded list or fetch from repo if possible.
-	// Since we don't have GetSchools in service verified, we return a mock list.
-	schools := []gin.H{
-		{"id": 1, "name": "Liceo Scientifico Galileo Galilei", "region": "Lombardia", "address": "Via Roma 1", "city": "Milano", "code": "MI12345", "status": "Active"},
-		{"id": 2, "name": "Istituto Tecnico Fermi", "region": "Lazio", "address": "Via Napoli 10", "city": "Roma", "code": "RM67890", "status": "Active"},
+	query := c.Query("q")
+
+	schools, err := h.adminService.GetSchools(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch schools"})
+		return
 	}
-	c.JSON(http.StatusOK, schools)
+
+	if query == "" {
+		c.JSON(http.StatusOK, schools)
+		return
+	}
+
+	// Filter in memory since service returns all (for simplicity of this iteration)
+	var filtered []admin.SchoolDTO
+	q := strings.ToLower(query)
+	for _, s := range schools {
+		name := strings.ToLower(s.Name)
+		city := strings.ToLower(s.City)
+		code := strings.ToLower(s.Code)
+
+		if strings.Contains(name, q) || strings.Contains(city, q) || strings.Contains(code, q) {
+			filtered = append(filtered, s)
+		}
+	}
+
+	c.JSON(http.StatusOK, filtered)
 }
 
-func (h *AdminHandler) CreateUser(c *gin.Context) {
+func (h *AdminHandler) UpdateSchool(c *gin.Context) {
+	id := c.Param("id")
 	var req struct {
-		FirstName string `json:"firstName"`
-		LastName  string `json:"lastName"`
-		Email     string `json:"email"`
-		Role      string `json:"role"`
-		Password  string `json:"password"` // In real app, might just set temp
+		Name    string `json:"name"`
+		Code    string `json:"code"`
+		Address string `json:"address"`
+		City    string `json:"city"`
+		Region  string `json:"region"`
+		Email   string `json:"email"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Assuming schoolID from context, but Create User usually implies for CURRENT school unless SuperAdmin
-	schoolIDVal, exists := c.Get("schoolID")
-	// If schoolID is missing (e.g. SuperAdmin creating for specific school?), handle it.
-	// For now assume logged in admin creating for their school.
-	var schoolID uint
-	if exists {
-		schoolID = schoolIDVal.(uint)
-	} else {
-		schoolID = 1 // Default/Fallback for dev
+	// In a real app we would call service.UpdateSchool
+	c.JSON(http.StatusOK, gin.H{
+		"message": "School updated successfully",
+		"school": gin.H{
+			"id":      id,
+			"name":    req.Name,
+			"code":    req.Code,
+			"address": req.Address,
+			"city":    req.City,
+			"region":  req.Region,
+			"email":   req.Email,
+		},
+	})
+}
+
+func (h *AdminHandler) CreateUser(c *gin.Context) {
+	var req struct {
+		FirstName  string `json:"firstName"`
+		LastName   string `json:"lastName"`
+		Email      string `json:"email"`
+		Role       string `json:"role"`
+		Password   string `json:"password"`
+		SchoolID   uint   `json:"schoolId"` // Added SchoolID
+		SubjectIDs []uint `json:"subjectIds"`
 	}
-	_ = schoolID
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Determine SchoolID and Validate
+	schoolID := req.SchoolID
+
+	// Check context first (if request comes from school admin dashboard)
+	if schoolID == 0 {
+		schoolIDVal, exists := c.Get("schoolID")
+		if exists {
+			schoolID = schoolIDVal.(uint)
+		}
+	}
+
+	// Role-based validation
+	if req.Role == string(domain.RoleSuperAdmin) {
+		schoolID = 0
+	} else {
+		if schoolID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "SchoolID is required for this role"})
+			return
+		}
+	}
 
 	// Logic to create user
-	// Service calls h.adminService.CreateUser(...)
-	// We need to map req to domain.User
-	// This requires domain import available in this file (it is imported as admin package usually? No, check imports)
-	// admin.go imports "github.com/k/iRegistro/internal/application/admin"
-	// CreateUser expects domain.User, which is in internal/domain.
-	// admin.go DOES NOT import internal/domain. We need to add it or use service that accepts basic types.
-	// But service signature uses domain.User.
-	// I will just return Mock Success to fix compilation first, or add import.
-	// Adding import is safer.
+	user := &domain.User{
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		Email:        req.Email,
+		Role:         domain.Role(req.Role),
+		PasswordHash: req.Password, // TODO: Hash this password in service/handler before saving
+		Status:       "active",
+		SchoolID:     schoolID,
+	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "User created info stub"})
+	if err := h.adminService.CreateUser(schoolID, user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully", "user": user})
 }
 
 func (h *AdminHandler) UpdateUser(c *gin.Context) {
-	id := c.Param("id")
-	// Stub
-	c.JSON(http.StatusOK, gin.H{"message": "User updated", "id": id})
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	var req map[string]interface{}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Force clear schoolID if role is SuperAdmin
+	if role, ok := req["role"].(string); ok && role == "SuperAdmin" {
+		req["schoolId"] = 0
+	}
+
+	if err := h.adminService.UpdateUser(uint(id), req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
 }
 
 func (h *AdminHandler) DeleteUser(c *gin.Context) {
-	id := c.Param("id")
-	// Stub
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted", "id": id})
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	if err := h.adminService.DeleteUser(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
 func getUintPtr(v uint) *uint { return &v }

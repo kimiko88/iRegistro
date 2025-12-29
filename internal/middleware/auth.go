@@ -14,6 +14,7 @@ import (
 func AuthMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
+		fmt.Printf("[DEBUG] AuthMiddleware Header: %q\n", authHeader)
 		if authHeader == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 			return
@@ -21,6 +22,7 @@ func AuthMiddleware(secret string) gin.HandlerFunc {
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader {
+			fmt.Println("[DEBUG] Bearer prefix missing")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Bearer token required"})
 			return
 		}

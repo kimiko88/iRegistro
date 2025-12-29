@@ -6,6 +6,8 @@ type AcademicRepository interface {
 	// School/Campus
 	CreateSchool(school *School) error
 	GetSchoolByID(id uint) (*School, error)
+	GetAllSchools() ([]School, error)
+	CountSchools() (int64, error)
 	CreateCampus(campus *Campus) error
 	GetCampusesBySchoolID(schoolID uint) ([]Campus, error)
 
@@ -25,6 +27,7 @@ type AcademicRepository interface {
 	// Subject
 	CreateSubject(subject *Subject) error
 	GetSubjectByID(id uint) (*Subject, error)
+	GetSubjectsByIDs(ids []uint) ([]Subject, error) // Added
 	AssignSubjectToClass(assignment *ClassSubjectAssignment) error
 	GetAssignmentsByTeacherID(teacherID uint) ([]ClassSubjectAssignment, error) // Added
 

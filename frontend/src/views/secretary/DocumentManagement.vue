@@ -85,7 +85,7 @@ onMounted(async () => {
           </a>
           <a role="tab" class="tab rounded-lg transition-all duration-200" 
              :class="{ 'tab-active bg-primary text-white shadow': activeTab === 'delivery', 'text-gray-500 hover:text-gray-700': activeTab !== 'delivery' }" 
-             @click="activeTab = 'delivery'">
+             @click="activeTab = 'delivery'; store.fetchDeliveryReports()">
              <Truck class="w-4 h-4 mr-2" /> Delivery Tracking
           </a>
       </div>
@@ -119,18 +119,25 @@ onMounted(async () => {
                            <th class="rounded-r-lg py-4">Last Action</th>
                        </tr>
                    </thead>
-                   <tbody class="text-sm">
-                       <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                           <td class="font-medium">Report Card - Mario Rossi</td>
-                           <td class="text-gray-500">Parent (G. Rossi)</td>
-                           <td><span class="badge badge-success gap-1 pl-1 pr-3 py-3"><CheckCircle class="w-3 h-3"/> Delivered</span></td>
-                           <td class="text-gray-500 font-mono text-xs">2024-05-20 10:00</td>
+                    <tbody class="text-sm">
+                       <tr v-if="store.deliveryReports.length === 0">
+                           <td colspan="4" class="text-center py-8 text-gray-500">No delivery reports found</td>
                        </tr>
-                       <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                           <td>Certificate 104</td>
-                           <td class="text-gray-500">Student (Mario Rossi)</td>
-                           <td><span class="badge badge-warning gap-1 pl-1 pr-3 py-3"><AlertTriangle class="w-3 h-3"/> Sent (Unread)</span></td>
-                           <td class="text-gray-500 font-mono text-xs">2024-05-21 09:30</td>
+                       <tr v-for="report in store.deliveryReports" :key="report.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                           <td class="font-medium">{{ report.documentName }}</td>
+                           <td class="text-gray-500">{{ report.recipientName }} ({{ report.recipientRole }})</td>
+                           <td>
+                               <span v-if="report.status === 'DELIVERED'" class="badge badge-success gap-1 pl-1 pr-3 py-3">
+                                   <CheckCircle class="w-3 h-3"/> Delivered
+                               </span>
+                               <span v-else-if="report.status === 'READ'" class="badge badge-info gap-1 pl-1 pr-3 py-3">
+                                   <CheckCircle class="w-3 h-3"/> Read
+                               </span>
+                               <span v-else class="badge badge-warning gap-1 pl-1 pr-3 py-3">
+                                   <AlertTriangle class="w-3 h-3"/> {{ report.status }}
+                               </span>
+                           </td>
+                           <td class="text-gray-500 font-mono text-xs">{{ new Date(report.lastActionAt).toLocaleString() }}</td>
                        </tr>
                    </tbody>
                </table>

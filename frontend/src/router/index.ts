@@ -56,6 +56,13 @@ const routes: Array<RouteRecordRaw> = [
                 meta: { requiresRole: 'SuperAdmin' }
             },
             {
+                path: 'superadmin/schools/:schoolId/users',
+                name: 'SchoolUserManagement',
+                component: UserManagement,
+                props: true,
+                meta: { requiresRole: 'SuperAdmin' }
+            },
+            {
                 path: 'admin',
                 component: AdminPanel,
                 meta: { requiresRole: 'Admin' },

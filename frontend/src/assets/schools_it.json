@@ -1,0 +1,66 @@
+[
+    {
+        "name": "Liceo Scientifico Galileo Galilei",
+        "code": "MIPS01000N",
+        "region": "Lombardia",
+        "city": "Milano",
+        "address": "Via Danimarca 54",
+        "email": "mips01000n@istruzione.it"
+    },
+    {
+        "name": "Istituto Tecnico Industriale Alessandro Volta",
+        "code": "NATF01000A",
+        "region": "Campania",
+        "city": "Napoli",
+        "address": "Piazza Immacolata 12",
+        "email": "natf01000a@istruzione.it"
+    },
+    {
+        "name": "Liceo Classico Ennio Quirino Visconti",
+        "code": "RMPC010001",
+        "region": "Lazio",
+        "city": "Roma",
+        "address": "Piazza del Collegio Romano 4",
+        "email": "rmpc010001@istruzione.it"
+    },
+    {
+        "name": "Istituto Superiore Leonardo da Vinci",
+        "code": "FIIS012007",
+        "region": "Toscana",
+        "city": "Firenze",
+        "address": "Via del Terzolle 91",
+        "email": "fiis012007@istruzione.it"
+    },
+    {
+        "name": "Liceo Artistico Statale di Verona",
+        "code": "VRSD02000P",
+        "region": "Veneto",
+        "city": "Verona",
+        "address": "Via delle Coste 6",
+        "email": "vrsd02000p@istruzione.it"
+    },
+    {
+        "name": "Istituto Tecnico Commerciale A. Gramsci",
+        "code": "PDTD01000L",
+        "region": "Veneto",
+        "city": "Padova",
+        "address": "Via Canestrini 76",
+        "email": "pdtd01000l@istruzione.it"
+    },
+    {
+        "name": "Liceo Scientifico Augusto Righi",
+        "code": "ROMA50000C",
+        "region": "Lazio",
+        "city": "Roma",
+        "address": "Via Campania 63",
+        "email": "roma50000c@istruzione.it"
+    },
+    {
+        "name": "Istituto Professionale Alberghiero Saffi",
+        "code": "FIIP05000D",
+        "region": "Toscana",
+        "city": "Firenze",
+        "address": "Via Andrea del Sarto 32",
+        "email": "fiip05000d@istruzione.it"
+    }
+]

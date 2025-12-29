@@ -1,7 +1,14 @@
 <template>
   <div class="p-6 space-y-6">
     <div class="flex justify-between items-center">
-      <h1 class="text-3xl font-bold">User Management</h1>
+      <div class="flex items-center gap-3">
+          <button v-if="schoolId" @click="goBack" class="btn btn-circle btn-ghost btn-sm">
+            <ArrowLeft class="w-5 h-5"/>
+          </button>
+          <h1 class="text-3xl font-bold">
+            {{ schoolId ? (route.query.schoolName || 'School Users') : 'User Management' }}
+          </h1>
+      </div>
       <div class="flex gap-2">
         <ActionButton 
           label="Import CSV" 
@@ -87,6 +94,8 @@
       :isOpen="showEditModal"
       :user="selectedUser"
       :loading="modifying"
+      :showSchoolSelect="!schoolId"
+      :preselectedSchoolId="schoolId"
       @close="showEditModal = false"
       @submit="handleUserSubmit"
     />
@@ -94,19 +103,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAdminStore } from '@/stores/admin';
 import { storeToRefs } from 'pinia';
 import ActionButton from '@/components/shared/ActionButton.vue';
 import DataTable from '@/components/shared/DataTable.vue';
 import UserImportModal from '@/components/admin/UserImportModal.vue';
 import UserEditModal from '@/components/admin/UserEditModal.vue';
-import { Plus, Upload, MoreHorizontal } from 'lucide-vue-next';
+import { Plus, Upload, MoreHorizontal, ArrowLeft } from 'lucide-vue-next';
 import adminService from '@/services/admin';
 import { useNotificationStore } from '@/stores/notification';
 
+const props = defineProps({
+    schoolId: {
+        type: String,
+        default: ''
+    }
+});
+
 const adminStore = useAdminStore();
 const notificationStore = useNotificationStore();
+const router = useRouter();
+const route = useRoute();
 const { users, totalUsers, loading } = storeToRefs(adminStore);
 
 const itemsPerPage = 10;
@@ -115,7 +134,8 @@ const filters = reactive({
   status: '',
   query: '',
   page: 1,
-  limit: itemsPerPage
+  limit: itemsPerPage,
+  schoolId: props.schoolId // Initialize with prop
 });
 
 const showImportModal = ref(false);
@@ -133,6 +153,10 @@ const columns = [
 ];
 
 const fetchUsers = () => {
+   // Ensure schoolId is passed if present
+   if (props.schoolId) {
+       filters.schoolId = props.schoolId;
+   }
    adminStore.fetchUsers(filters);
 };
 
@@ -160,11 +184,16 @@ const editUser = (user: any) => {
 const handleUserSubmit = async (formData: any) => {
   modifying.value = true;
   try {
+    const payload = { ...formData };
+    if (props.schoolId) {
+        payload.schoolId = parseInt(props.schoolId as string); // Inject school context as number
+    }
+
     if (selectedUser.value) {
-       await adminService.updateUser((selectedUser.value as any).id, formData);
+       await adminService.updateUser((selectedUser.value as any).id, payload);
        notificationStore.success('User updated successfully');
     } else {
-       await adminService.createUser(formData);
+       await adminService.createUser(payload);
        notificationStore.success('User created successfully');
     }
     showEditModal.value = false;
@@ -177,25 +206,47 @@ const handleUserSubmit = async (formData: any) => {
 };
 
 const toggleStatus = async (user: any) => {
-  // Implementation for deactivate/activate
-  notificationStore.info(`Simulated: ${user.status === 'active' ? 'Deactivated' : 'Activated'} user`);
+  if (!confirm(`Are you sure you want to ${user.status === 'active' ? 'deactivate' : 'activate'} ${user.firstName}?`)) return;
+  
+  try {
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    await adminService.updateUser(user.id, { status: newStatus, schoolId: props.schoolId ? parseInt(props.schoolId as string) : undefined });
+    notificationStore.success(`User ${user.status === 'active' ? 'deactivated' : 'activated'} successfully`);
+    fetchUsers();
+  } catch (err) {
+    notificationStore.error('Failed to update user status');
+  }
 };
 
 const resetPassword = async (user: any) => {
-  // Implementation
-   notificationStore.info(`Simulated: Password reset email sent to ${user.email}`);
+   const newPassword = prompt(`Enter new password for ${user.firstName}:`);
+   if (!newPassword) return;
+
+   try {
+     await adminService.updateUser(user.id, { password: newPassword, schoolId: props.schoolId ? parseInt(props.schoolId as string) : undefined });
+     notificationStore.success('Password updated successfully');
+   } catch (err) {
+     notificationStore.error('Failed to reset password');
+   }
 };
 
 const viewHistory = (user: any) => {
-  // View audit logs for user
-  notificationStore.info('Not implemented: View History');
+  router.push({ name: 'AuditLogs', query: { userId: user.id } });
 };
 
 const onImportSuccess = () => {
   fetchUsers();
 };
 
+const goBack = () => {
+    router.back();
+}
+
 onMounted(() => {
+  // Ensure filters has schoolId if prop is present
+  if (props.schoolId) {
+      filters.schoolId = props.schoolId;
+  }
   fetchUsers();
 });
 </script>

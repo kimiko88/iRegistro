@@ -33,7 +33,7 @@ func (r *UserRepository) FindByEmail(email string) (*domain.User, error) {
 
 func (r *UserRepository) FindByID(id uint) (*domain.User, error) {
 	var user domain.User
-	if err := r.db.First(&user, id).Error; err != nil {
+	if err := r.db.Preload("Subjects").First(&user, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -44,7 +44,11 @@ func (r *UserRepository) FindByID(id uint) (*domain.User, error) {
 
 func (r *UserRepository) FindAll(schoolID uint) ([]domain.User, error) {
 	var users []domain.User
-	if err := r.db.Where("school_id = ?", schoolID).Find(&users).Error; err != nil {
+	query := r.db
+	if schoolID != 0 {
+		query = query.Where("school_id = ?", schoolID)
+	}
+	if err := query.Preload("Subjects").Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return users, nil
@@ -64,4 +68,20 @@ func (r *UserRepository) GetByExternalID(ctx context.Context, externalID string)
 
 func (r *UserRepository) Update(user *domain.User) error {
 	return r.db.Save(user).Error
+}
+
+func (r *UserRepository) Delete(id uint) error {
+	return r.db.Delete(&domain.User{}, id).Error
+}
+
+func (r *UserRepository) CountAll() (int64, error) {
+	var count int64
+	err := r.db.Model(&domain.User{}).Count(&count).Error
+	return count, err
+}
+
+func (r *UserRepository) CountBySchoolAndRole(schoolID uint, role domain.Role) (int64, error) {
+	var count int64
+	err := r.db.Model(&domain.User{}).Where("school_id = ? AND role = ?", schoolID, role).Count(&count).Error
+	return count, err
 }

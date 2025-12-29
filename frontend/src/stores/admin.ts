@@ -55,13 +55,67 @@ export const useAdminStore = defineStore('admin', () => {
         }
     };
 
-    const loadAuditLogs = async (params: any = {}) => {
+    const fetchAuditLogs = async (params: any = {}) => {
         try {
             loading.value = true;
             const response = await adminService.getAuditLogs(params);
             auditLogs.value = response.data.data || response.data;
         } catch (err) {
             notificationStore.error('Failed to load audit logs');
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const createSchool = async (data: any) => {
+        try {
+            loading.value = true;
+            await adminService.createSchool(data);
+            notificationStore.success('School created successfully');
+            await fetchSchools();
+        } catch (err) {
+            notificationStore.error('Failed to create school');
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const updateSchool = async (id: string, data: any) => {
+        try {
+            loading.value = true;
+            await adminService.updateSchool(id, data);
+            notificationStore.success('School updated successfully');
+            await fetchSchools();
+        } catch (err) {
+            notificationStore.error('Failed to update school');
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const createUser = async (data: any) => {
+        try {
+            loading.value = true;
+            await adminService.createUser(data); // This maps to backend "CreateUser"
+            notificationStore.success('User created successfully');
+            await fetchUsers();
+        } catch (err) {
+            notificationStore.error('Failed to create user');
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const updateUser = async (id: string, data: any) => {
+        try {
+            loading.value = true;
+            await adminService.updateUser(id, data);
+            // notificationStore.success('User updated'); // View handles success msg or we do? View did it.
+        } catch (err) {
+            throw err;
         } finally {
             loading.value = false;
         }
@@ -79,6 +133,10 @@ export const useAdminStore = defineStore('admin', () => {
         fetchKPIs,
         fetchUsers,
         fetchSchools,
-        loadAuditLogs
+        fetchAuditLogs,
+        createSchool,
+        updateSchool,
+        createUser,
+        updateUser
     };
 });

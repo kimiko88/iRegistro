@@ -274,3 +274,7 @@ func (s *AuthService) ResetPassword(email, token, newPassword string) error {
 
 	return s.userRepo.Update(user)
 }
+
+func (s *AuthService) GetUserByID(id uint) (*domain.User, error) {
+	return s.userRepo.FindByID(id)
+}

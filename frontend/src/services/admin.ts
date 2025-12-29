@@ -1,11 +1,11 @@
-import axios from 'axios';
+import api from './api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
-const api = axios.create({
+/* const api = axios.create({
     baseURL: API_URL,
     withCredentials: true,
-});
+}); */
 
 // Types can be moved to a shared types file later
 export interface School {
@@ -59,10 +59,10 @@ export default {
         return api.get('/admin/schools', { params });
     },
     createSchool(schoolData: any) {
-        return api.post('/admin/schools', schoolData);
+        return api.post('/superadmin/schools', schoolData);
     },
     updateSchool(id: string, schoolData: any) {
-        return api.put(`/admin/schools/${id}`, schoolData);
+        return api.put(`/superadmin/schools/${id}`, schoolData);
     },
 
     // Audits & Backups

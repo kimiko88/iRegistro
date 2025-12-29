@@ -29,6 +29,18 @@ func (r *AcademicRepository) GetSchoolByID(id uint) (*domain.School, error) {
 	return &school, nil
 }
 
+func (r *AcademicRepository) GetAllSchools() ([]domain.School, error) {
+	var schools []domain.School
+	err := r.db.Find(&schools).Error
+	return schools, err
+}
+
+func (r *AcademicRepository) CountSchools() (int64, error) {
+	var count int64
+	err := r.db.Model(&domain.School{}).Count(&count).Error
+	return count, err
+}
+
 func (r *AcademicRepository) CreateCampus(campus *domain.Campus) error {
 	return r.db.Create(campus).Error
 }
@@ -107,6 +119,15 @@ func (r *AcademicRepository) GetSubjectByID(id uint) (*domain.Subject, error) {
 		return nil, err
 	}
 	return &subject, nil
+}
+
+func (r *AcademicRepository) GetSubjectsByIDs(ids []uint) ([]domain.Subject, error) {
+	var subjects []domain.Subject
+	if len(ids) == 0 {
+		return subjects, nil
+	}
+	err := r.db.Where("id IN ?", ids).Find(&subjects).Error
+	return subjects, err
 }
 
 func (r *AcademicRepository) AssignSubjectToClass(assignment *domain.ClassSubjectAssignment) error {

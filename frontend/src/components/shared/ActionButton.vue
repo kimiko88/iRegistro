@@ -1,41 +1,12 @@
-<template>
-  <button
-    :class="[
-      'btn',
-      variantClass,
-      sizeClass,
-      { 'loading': loading, 'btn-disabled': disabled || loading }
-    ]"
-    @click="handleClick"
-    :disabled="disabled || loading"
-    :type="type"
-  >
-    <component
-      v-if="icon && !loading"
-      :is="icon"
-      class="w-4 h-4 mr-2"
-    />
-    <span v-if="loading" class="loading loading-spinner"></span>
-    <slot>{{ label }}</slot>
-  </button>
-
-  <ConfirmDialog
-    v-if="requiresConfirmation"
-    :is-open="showConfirm"
-    :title="confirmTitle"
-    :message="confirmMessage"
-    @confirm="onConfirm"
-    @cancel="showConfirm = false"
-  />
-</template>
+<script lang="ts">
+export default {
+  inheritAttrs: false
+}
+</script>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import ConfirmDialog from './ConfirmDialog.vue'; // Cyclic dependency handled by Vue usually fine, or we can use slot
-// But better to separate concern or use a simpler approach. 
-// For now, let's keep it simple and assume ConfirmDialog is globally registered or imported.
-// Actually, to avoid circular deps if ConfirmDialog uses ActionButton, be careful.
-// Let's implement ConfirmDialog first in next step or assume it handles its buttons primitively.
+import { ref, computed, useAttrs } from 'vue';
+import ConfirmDialog from './ConfirmDialog.vue';
 
 // Props
 interface Props {
@@ -63,6 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits(['click', 'confirmed']);
+const attrs = useAttrs(); // Use attrs if needed, but v-bind="$attrs" on button is enough
 
 const showConfirm = ref(false);
 
@@ -105,3 +77,35 @@ const onConfirm = () => {
   emit('confirmed');
 };
 </script>
+
+<template>
+  <button
+    :class="[
+      'btn',
+      variantClass,
+      sizeClass,
+      { 'loading': loading, 'btn-disabled': disabled || loading }
+    ]"
+    v-bind="$attrs"
+    @click="handleClick"
+    :disabled="disabled || loading"
+    :type="type"
+  >
+    <component
+      v-if="icon && !loading"
+      :is="icon"
+      class="w-4 h-4 mr-2"
+    />
+    <span v-if="loading" class="loading loading-spinner"></span>
+    <slot>{{ label }}</slot>
+  </button>
+
+  <ConfirmDialog
+    v-if="requiresConfirmation"
+    :is-open="showConfirm"
+    :title="confirmTitle"
+    :message="confirmMessage"
+    @confirm="onConfirm"
+    @cancel="showConfirm = false"
+  />
+</template>

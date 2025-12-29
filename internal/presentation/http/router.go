@@ -48,6 +48,7 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 			protected := auth.Group("/")
 			protected.Use(middleware.AuthMiddleware(secret)) // Should inject config
 			{
+				protected.GET("/me", authHandler.GetMe)
 				protected.POST("/2fa/enable", authHandler.Enable2FA)
 				protected.POST("/2fa/verify", authHandler.Verify2FA)
 			}
@@ -132,6 +133,7 @@ func NewRouter(authHandler *handlers.AuthHandler, wsHandler *ws.Handler, db *gor
 			sa.Use(middleware.AuthMiddleware(secret)) // Add Role check middleware
 			{
 				sa.POST("/schools", adminHandler.CreateSchool)
+				sa.PUT("/schools/:id", adminHandler.UpdateSchool)
 			}
 
 			// School Admin

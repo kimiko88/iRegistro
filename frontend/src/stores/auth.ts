@@ -21,6 +21,16 @@ export const useAuthStore = defineStore('auth', {
                 return false;
             }
         },
+        async fetchUser() {
+            if (!this.token) return;
+            try {
+                const res = await api.get('/auth/me');
+                this.user = res.data;
+                this.isAuthenticated = true;
+            } catch (e) {
+                this.logout();
+            }
+        },
         logout() {
             this.token = '';
             this.user = null;

@@ -154,7 +154,7 @@ func TestAdminService_CreateUser(t *testing.T) {
 
 	mockUserRepo.On("Create", user).Return(nil)
 
-	err := service.CreateUser(schoolID, user)
+	err := service.CreateUser(schoolID, user, nil)
 
 	assert.NoError(t, err)
 	assert.Equal(t, schoolID, user.SchoolID)
