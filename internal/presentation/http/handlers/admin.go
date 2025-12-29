@@ -233,6 +233,23 @@ func (h *AdminHandler) CreateUser(c *gin.Context) {
 		}
 	}
 
+	// Get requester role for validation
+	requesterRoleInterface, _ := c.Get("role")
+	requesterRole := requesterRoleInterface.(domain.Role)
+
+	// Validate role-based permissions
+	targetRole := domain.Role(req.Role)
+
+	// Secretary can only create Teacher, Student, Parent
+	if requesterRole == domain.RoleSecretary {
+		if targetRole != domain.RoleTeacher && targetRole != domain.RoleStudent && targetRole != domain.RoleParent {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Secretary can only create Teacher, Student, or Parent roles"})
+			return
+		}
+		// Force Secretary's school
+		schoolID = c.GetUint("schoolID")
+	}
+
 	// Role-based validation
 	if req.Role == string(domain.RoleSuperAdmin) {
 		schoolID = 0
@@ -254,7 +271,7 @@ func (h *AdminHandler) CreateUser(c *gin.Context) {
 		SchoolID:     schoolID,
 	}
 
-	if err := h.adminService.CreateUser(schoolID, user); err != nil {
+	if err := h.adminService.CreateUser(schoolID, user, req.SubjectIDs); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

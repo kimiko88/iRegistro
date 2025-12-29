@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 // import { useAuthStore } from '@/stores/auth';
 import api from '@/services/api'; 
 import Modal from '@/components/shared/Modal.vue';
@@ -12,6 +12,17 @@ const schoolId = 1; // Simplification: should get from user context
 const classes = ref<any[]>([]);
 const teachers = ref<any[]>([]);
 const subjects = ref<any[]>([]);
+
+const filteredTeachers = computed(() => {
+    if (!newAssignment.value.subjectId) return [];
+    return teachers.value.filter(t => {
+        // Check if teacher has this subject assigned
+        // Assuming t.subjects is an array of objects {id, ...}
+        if (!t.subjects || !Array.isArray(t.subjects)) return false; // Or true if we want to show all if no subjects assigned? Request implies strict filter.
+        return t.subjects.some((s: any) => s.id === newAssignment.value.subjectId);
+    });
+});
+
 
 const isCreateClassModalOpen = ref(false);
 const isAssignModalOpen = ref(false);
@@ -215,8 +226,11 @@ const assignSubject = async () => {
                 <label class="label">Teacher</label>
                 <select class="select select-bordered" v-model="newAssignment.teacherId" :disabled="!newAssignment.subjectId">
                      <option disabled selected :value="null">Select Teacher</option>
-                    <option v-for="t in teachers" :key="t.id" :value="t.id">{{ t.first_name }} {{ t.last_name }}</option>
+                    <option v-for="t in filteredTeachers" :key="t.id" :value="t.id">{{ t.first_name }} {{ t.last_name }}</option>
                 </select>
+                <label class="label" v-if="newAssignment.subjectId && filteredTeachers.length === 0">
+                    <span class="label-text-alt text-warning">No teachers found for this subject.</span>
+                </label>
              </div>
          </div>
          <template #actions>

@@ -33,7 +33,7 @@ func (r *UserRepository) FindByEmail(email string) (*domain.User, error) {
 
 func (r *UserRepository) FindByID(id uint) (*domain.User, error) {
 	var user domain.User
-	if err := r.db.Preload("Subjects").First(&user, id).Error; err != nil {
+	if err := r.db.Preload("Subjects").Preload("School").First(&user, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -48,7 +48,7 @@ func (r *UserRepository) FindAll(schoolID uint) ([]domain.User, error) {
 	if schoolID != 0 {
 		query = query.Where("school_id = ?", schoolID)
 	}
-	if err := query.Preload("Subjects").Find(&users).Error; err != nil {
+	if err := query.Preload("Subjects").Preload("School").Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return users, nil

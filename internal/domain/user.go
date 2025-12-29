@@ -23,6 +23,7 @@ type User struct {
 	Email          string     `gorm:"uniqueIndex;not null" json:"email"`
 	PasswordHash   string     `gorm:"not null" json:"-"`
 	SchoolID       uint       `gorm:"index" json:"schoolId"` // 0 for SuperAdmin
+	School         *School    `json:"school,omitempty"`      // Added association
 	Role           Role       `gorm:"type:varchar(50);not null" json:"role"`
 	Subjects       []Subject  `gorm:"many2many:user_subjects;" json:"subjects,omitempty"`
 	Status         string     `gorm:"type:varchar(20);default:'active'" json:"status"` // active, inactive

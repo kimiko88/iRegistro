@@ -46,7 +46,8 @@ const menuItems = computed(() => {
     // Secretary
     { label: 'Inbox', to: '/secretary', icon: FileText, roles: ['Secretary'] },
     { label: 'Archive', to: '/secretary/archive', icon: Archive, roles: ['Secretary'] },
-    { label: 'Classes', to: '/secretary/classes', icon: Users, roles: ['Secretary'] },
+    { label: 'Classes', to: '/secretary/classes', icon: BookOpen, roles: ['Secretary'] },
+    { label: 'Users', to: '/secretary/users', icon: Users, roles: ['Secretary'] },
 
     // Director
     { label: 'School Overview', to: '/director', icon: Home, roles: ['Principal'] },
@@ -77,10 +78,14 @@ const menuItems = computed(() => {
           </button>
         </div>
         
-        <div class="flex-1 px-4">
+        <div class="flex-1 px-4 items-center gap-4">
            <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hidden md:block">
              iRegistro
            </h1>
+           <div v-if="auth.user?.school" class="hidden md:flex items-center gap-2 text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
+                <School class="w-4 h-4" />
+                <span class="font-medium">{{ auth.user.school.name }}</span>
+           </div>
         </div>
         
         <div class="flex-none gap-4">

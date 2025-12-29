@@ -143,6 +143,12 @@ const routes: Array<RouteRecordRaw> = [
                 meta: { requiresRole: 'Secretary' }
             },
             {
+                path: 'secretary/users',
+                name: 'SecretaryUserManagement',
+                component: UserManagement,
+                meta: { requiresRole: 'Secretary' }
+            },
+            {
                 path: 'secretary/archive',
                 name: 'SecretaryArchive',
                 component: Archive,

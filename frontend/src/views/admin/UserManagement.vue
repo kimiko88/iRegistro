@@ -2,11 +2,11 @@
   <div class="p-6 space-y-6">
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-3">
-          <button v-if="schoolId" @click="goBack" class="btn btn-circle btn-ghost btn-sm">
+      <button v-if="currentSchoolId && authStore.user?.role !== 'Secretary'" @click="goBack" class="btn btn-circle btn-ghost btn-sm">
             <ArrowLeft class="w-5 h-5"/>
           </button>
           <h1 class="text-3xl font-bold">
-            {{ schoolId ? (route.query.schoolName || 'School Users') : 'User Management' }}
+            {{ currentSchoolId ? (route.query.schoolName || 'School Users') : 'User Management' }}
           </h1>
       </div>
       <div class="flex gap-2">
@@ -94,8 +94,8 @@
       :isOpen="showEditModal"
       :user="selectedUser"
       :loading="modifying"
-      :showSchoolSelect="!schoolId"
-      :preselectedSchoolId="schoolId"
+      :showSchoolSelect="!currentSchoolId"
+      :preselectedSchoolId="currentSchoolId"
       @close="showEditModal = false"
       @submit="handleUserSubmit"
     />
@@ -103,8 +103,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 import { useAdminStore } from '@/stores/admin';
 import { storeToRefs } from 'pinia';
 import ActionButton from '@/components/shared/ActionButton.vue';
@@ -122,11 +123,20 @@ const props = defineProps({
     }
 });
 
+const authStore = useAuthStore();
 const adminStore = useAdminStore();
 const notificationStore = useNotificationStore();
 const router = useRouter();
 const route = useRoute();
 const { users, totalUsers, loading } = storeToRefs(adminStore);
+
+const currentSchoolId = computed(() => {
+    if (props.schoolId) return props.schoolId;
+    if (authStore.user?.role === 'Secretary' && authStore.user?.schoolId) {
+        return authStore.user.schoolId.toString();
+    }
+    return ''; // Global admin view or no school context
+});
 
 const itemsPerPage = 10;
 const filters = reactive({
@@ -135,7 +145,7 @@ const filters = reactive({
   query: '',
   page: 1,
   limit: itemsPerPage,
-  schoolId: props.schoolId // Initialize with prop
+  schoolId: currentSchoolId.value
 });
 
 const showImportModal = ref(false);
@@ -154,8 +164,8 @@ const columns = [
 
 const fetchUsers = () => {
    // Ensure schoolId is passed if present
-   if (props.schoolId) {
-       filters.schoolId = props.schoolId;
+   if (currentSchoolId.value) {
+       filters.schoolId = currentSchoolId.value;
    }
    adminStore.fetchUsers(filters);
 };
